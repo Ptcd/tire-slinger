@@ -113,13 +113,75 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
     }
 
     if (tire) {
-      // Update existing
+      // Update existing - check for marketplace listing changes
+      const { data: existingListing } = await supabase
+        .from('external_listings')
+        .select('*')
+        .eq('tire_id', tire.id)
+        .eq('platform', 'facebook_marketplace')
+        .eq('status', 'posted')
+        .maybeSingle()
+
+      // Update tire
       const { error } = await supabase
         .from('tires')
         .update(tireData)
         .eq('id', tire.id)
 
       if (error) throw error
+
+      // Create tasks if listing exists and values changed
+      if (existingListing) {
+        const tasksToCreate: any[] = []
+
+        // Check if sold out
+        if (data.quantity === 0 && tire.quantity > 0) {
+          tasksToCreate.push({
+            org_id: organization.id,
+            tire_id: tire.id,
+            external_listing_id: existingListing.id,
+            platform: 'facebook_marketplace',
+            task_type: 'delete_listing',
+            reason: 'sold_out',
+            status: 'open',
+            priority: 3,
+            metadata: { old_quantity: tire.quantity, new_quantity: 0 },
+          })
+        }
+        // Check if price changed
+        else if (data.price !== tire.price) {
+          tasksToCreate.push({
+            org_id: organization.id,
+            tire_id: tire.id,
+            external_listing_id: existingListing.id,
+            platform: 'facebook_marketplace',
+            task_type: 'update_listing',
+            reason: 'price_changed',
+            status: 'open',
+            priority: 2,
+            metadata: { old_price: tire.price, new_price: data.price },
+          })
+        }
+        // Check if quantity changed (but not to zero)
+        else if (data.quantity !== tire.quantity && data.quantity > 0) {
+          tasksToCreate.push({
+            org_id: organization.id,
+            tire_id: tire.id,
+            external_listing_id: existingListing.id,
+            platform: 'facebook_marketplace',
+            task_type: 'update_listing',
+            reason: 'quantity_changed',
+            status: 'open',
+            priority: 2,
+            metadata: { old_quantity: tire.quantity, new_quantity: data.quantity },
+          })
+        }
+
+        // Insert tasks if any
+        if (tasksToCreate.length > 0) {
+          await supabase.from('external_tasks').insert(tasksToCreate)
+        }
+      }
     } else {
       // Create new
       const { error } = await supabase
@@ -159,11 +221,22 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">{tire ? 'Edit Tire' : 'Add New Tire'}</h2>
-          {tire && saveStatus !== 'idle' && (
-            <span className="text-sm text-muted-foreground">
-              {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
-            </span>
-          )}
+          <div className="flex items-center gap-4">
+            {tire && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push(`/admin/inventory/${tire.id}/marketplace`)}
+              >
+                Marketplace Package
+              </Button>
+            )}
+            {tire && saveStatus !== 'idle' && (
+              <span className="text-sm text-muted-foreground">
+                {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Size */}
