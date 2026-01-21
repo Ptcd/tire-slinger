@@ -26,7 +26,7 @@ interface CSVRow {
   model?: string
   tire_type?: string
   condition?: string
-  tread_depth?: number
+  tread_depth?: number | null
   price: number
   quantity: number
   description?: string
