@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { AlertTriangle, Calendar, ExternalLink } from 'lucide-react'
-import { formatTireSize, formatPrice } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import Link from 'next/link'
 import type { Tire, Organization } from '@/lib/types'
 

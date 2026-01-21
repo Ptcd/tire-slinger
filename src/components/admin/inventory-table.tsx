@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { MoreHorizontal, Edit, Trash2, ExternalLink } from 'lucide-react'
-import { formatPrice, formatTireSize } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import { TIRE_TYPES, TIRE_CONDITIONS } from '@/lib/constants'
 import type { Tire } from '@/lib/types'
 

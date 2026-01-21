@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Copy, CheckCircle2, ExternalLink, Package } from 'lucide-react'
-import { formatPrice, formatTireSize } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import { TIRE_CONDITIONS, TIRE_TYPES } from '@/lib/constants'
 import type { Tire, ExternalListing } from '@/lib/types'
 
@@ -59,7 +59,7 @@ export default function MarketplacePackagePage() {
     
     if (tire.brand) parts.push(tire.brand)
     if (tire.model) parts.push(tire.model)
-    parts.push(formatTireSize(tire))
+    parts.push(tire.size_display)
     
     const condition = TIRE_CONDITIONS.find(c => c.value === tire.condition)?.label || tire.condition
     parts.push(condition)
@@ -78,7 +78,7 @@ export default function MarketplacePackagePage() {
   const generateDescription = (tire: Tire): string => {
     const lines: string[] = []
     
-    lines.push(`Tire Size: ${formatTireSize(tire)}`)
+    lines.push(`Tire Size: ${tire.size_display}`)
     
     if (tire.brand) lines.push(`Brand: ${tire.brand}`)
     if (tire.model) lines.push(`Model: ${tire.model}`)
