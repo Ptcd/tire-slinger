@@ -19,6 +19,8 @@ export function StatsCards() {
   useEffect(() => {
     if (!organization) return
 
+    const orgId = organization.id
+
     async function loadStats() {
       const supabase = createClient()
       
@@ -26,7 +28,7 @@ export function StatsCards() {
       const { data: tires } = await supabase
         .from('tires')
         .select('quantity, is_active')
-        .eq('org_id', organization.id)
+        .eq('org_id', orgId)
 
       if (tires) {
         const totalTires = tires.length
@@ -37,7 +39,7 @@ export function StatsCards() {
         const { count: activeListings } = await supabase
           .from('external_listings')
           .select('*', { count: 'exact', head: true })
-          .eq('org_id', organization.id)
+          .eq('org_id', orgId)
           .eq('status', 'posted')
 
         setStats({
