@@ -58,7 +58,7 @@ export default async function TireDetailPage({
                 </div>
                 {tire.images.length > 1 && (
                   <div className="grid grid-cols-4 gap-2">
-                    {tire.images.slice(1).map((img, idx) => (
+                    {tire.images.slice(1).map((img: string, idx: number) => (
                       <div key={idx} className="relative h-24 w-full rounded overflow-hidden bg-slate-200">
                         <Image
                           src={img}
