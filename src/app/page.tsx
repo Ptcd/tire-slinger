@@ -18,7 +18,9 @@ export default function LandingPage() {
               <Button size="lg">Browse Inventory</Button>
             </Link>
             <Link href="/signup">
-              <Button size="lg" variant="outline">List Your Inventory</Button>
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-slate-900">
+                List Your Inventory
+              </Button>
             </Link>
           </div>
         </div>
