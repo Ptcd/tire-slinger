@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { UserPlus } from 'lucide-react'
 
 export function SignupForm() {
   const router = useRouter()
@@ -70,10 +71,10 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Create Account</CardTitle>
-        <CardDescription>Sign up to start managing your tire inventory</CardDescription>
+    <Card className="w-full border-2 border-border">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl font-bold">Create Your Account</CardTitle>
+        <CardDescription>Start managing your tire inventory today</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -92,6 +93,7 @@ export function SignupForm() {
               onChange={(e) => setName(e.target.value)}
               required
               disabled={loading}
+              className="bg-muted border-border"
             />
           </div>
           <div className="space-y-2">
@@ -104,6 +106,7 @@ export function SignupForm() {
               onChange={(e) => setYardName(e.target.value)}
               required
               disabled={loading}
+              className="bg-muted border-border"
             />
           </div>
           <div className="space-y-2">
@@ -116,6 +119,7 @@ export function SignupForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              className="bg-muted border-border"
             />
           </div>
           <div className="space-y-2">
@@ -123,21 +127,24 @@ export function SignupForm() {
             <Input
               id="password"
               type="password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
               disabled={loading}
+              className="bg-muted border-border"
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating account...' : 'Sign Up'}
+          <Button type="submit" className="w-full font-bold" disabled={loading}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            {loading ? 'Creating account...' : 'Get Started Free'}
           </Button>
           <p className="text-sm text-muted-foreground text-center">
             Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href="/login" className="text-primary hover:underline font-semibold">
               Sign in
             </Link>
           </p>
@@ -146,4 +153,3 @@ export function SignupForm() {
     </Card>
   )
 }
-

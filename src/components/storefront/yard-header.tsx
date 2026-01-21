@@ -1,5 +1,6 @@
 import Image from 'next/image'
-import { Phone, Mail, MapPin } from 'lucide-react'
+import Link from 'next/link'
+import { Phone, Mail, MapPin, CircleDot } from 'lucide-react'
 import type { Organization } from '@/lib/types'
 
 interface YardHeaderProps {
@@ -8,7 +9,20 @@ interface YardHeaderProps {
 
 export function YardHeader({ organization }: YardHeaderProps) {
   return (
-    <div className="bg-white border-b">
+    <div className="bg-card border-b border-border">
+      {/* Top bar with logo */}
+      <div className="bg-sidebar border-b border-border">
+        <div className="container mx-auto px-4 py-3">
+          <Link href="/" className="flex items-center gap-2">
+            <CircleDot className="h-6 w-6 text-primary" />
+            <span className="text-lg font-black text-foreground">
+              TIRE<span className="text-primary">SLINGERS</span>
+            </span>
+          </Link>
+        </div>
+      </div>
+      
+      {/* Yard info */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-6 items-start">
           {organization.logo_url && (
@@ -18,31 +32,31 @@ export function YardHeader({ organization }: YardHeaderProps) {
                 alt={organization.name}
                 width={120}
                 height={120}
-                className="rounded-lg"
+                className="rounded-lg border-2 border-border"
               />
             </div>
           )}
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">{organization.name}</h1>
+            <h1 className="text-3xl font-black mb-2 text-foreground">{organization.name}</h1>
             {organization.description && (
-              <p className="text-slate-600 mb-4">{organization.description}</p>
+              <p className="text-muted-foreground mb-4">{organization.description}</p>
             )}
-            <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
               {organization.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
+                <a href={`tel:${organization.phone}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+                  <Phone className="h-4 w-4 text-primary" />
                   <span>{organization.phone}</span>
-                </div>
+                </a>
               )}
               {organization.email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
+                <a href={`mailto:${organization.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
+                  <Mail className="h-4 w-4 text-primary" />
                   <span>{organization.email}</span>
-                </div>
+                </a>
               )}
               {organization.city && organization.state && (
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
+                  <MapPin className="h-4 w-4 text-primary" />
                   <span>{organization.city}, {organization.state}</span>
                 </div>
               )}
@@ -53,4 +67,3 @@ export function YardHeader({ organization }: YardHeaderProps) {
     </div>
   )
 }
-

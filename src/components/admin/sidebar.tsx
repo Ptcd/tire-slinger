@@ -12,6 +12,7 @@ import {
   Settings,
   FileText,
   LogOut,
+  CircleDot,
 } from 'lucide-react'
 import { useUser } from '@/hooks/use-user'
 import { createClient } from '@/lib/supabase/client'
@@ -49,10 +50,26 @@ export function Sidebar() {
   })
 
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-slate-50">
-      <div className="flex h-16 items-center border-b px-6">
-        <h1 className="text-xl font-semibold">Tire Slingers</h1>
+    <div className="flex h-screen w-64 flex-col border-r border-border bg-sidebar">
+      {/* Logo */}
+      <div className="flex h-16 items-center border-b border-border px-6">
+        <Link href="/admin" className="flex items-center gap-2">
+          <CircleDot className="h-8 w-8 text-primary" />
+          <span className="text-xl font-black text-foreground">
+            TIRE<span className="text-primary">SLINGERS</span>
+          </span>
+        </Link>
       </div>
+      
+      {/* Organization name */}
+      {organization && (
+        <div className="px-6 py-3 border-b border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">Your Yard</p>
+          <p className="text-sm font-semibold text-foreground truncate">{organization.name}</p>
+        </div>
+      )}
+      
+      {/* Navigation */}
       <nav className="flex-1 space-y-1 p-4">
         {filteredNavItems.map((item) => {
           const Icon = item.icon
@@ -62,10 +79,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
                 isActive
-                  ? 'bg-slate-900 text-white'
-                  : 'text-slate-700 hover:bg-slate-100'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
               <Icon className="h-5 w-5" />
@@ -74,10 +91,12 @@ export function Sidebar() {
           )
         })}
       </nav>
-      <div className="border-t p-4">
+      
+      {/* Logout */}
+      <div className="border-t border-border p-4">
         <Button
           variant="ghost"
-          className="w-full justify-start"
+          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-muted"
           onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
@@ -87,4 +106,3 @@ export function Sidebar() {
     </div>
   )
 }
-

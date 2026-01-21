@@ -14,9 +14,9 @@ interface TireCardProps {
 
 export function TireCard({ tire, organization, yardSlug }: TireCardProps) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-2 border-border hover:border-primary/50 transition-colors">
       <Link href={`/yard/${yardSlug}/tire/${tire.id}`}>
-        <div className="relative h-48 w-full bg-slate-200">
+        <div className="relative h-48 w-full bg-muted">
           {tire.images && tire.images.length > 0 ? (
             <Image
               src={tire.images[0]}
@@ -25,7 +25,7 @@ export function TireCard({ tire, organization, yardSlug }: TireCardProps) {
               className="object-cover"
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-slate-400">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               No Image
             </div>
           )}
@@ -33,19 +33,23 @@ export function TireCard({ tire, organization, yardSlug }: TireCardProps) {
       </Link>
       <CardContent className="p-4">
         <Link href={`/yard/${yardSlug}/tire/${tire.id}`}>
-          <h3 className="font-semibold text-lg mb-1">{tire.size_display}</h3>
+          <h3 className="font-bold text-lg mb-1 text-foreground hover:text-primary transition-colors">
+            {tire.size_display}
+          </h3>
         </Link>
-        <p className="text-sm text-slate-600 mb-2">
+        <p className="text-sm text-muted-foreground mb-2">
           {tire.brand} {tire.model && `- ${tire.model}`}
         </p>
-        <div className="flex gap-2 mb-2">
-          <Badge variant="outline">{tire.condition}</Badge>
+        <div className="flex gap-2 mb-3">
+          <Badge variant="secondary">{tire.condition}</Badge>
           {tire.tread_depth && (
-            <Badge variant="outline">{tire.tread_depth}/32"</Badge>
+            <Badge variant="secondary">{tire.tread_depth}/32"</Badge>
           )}
         </div>
-        <p className="text-2xl font-bold mb-2">{formatPrice(tire.price)}</p>
-        <p className="text-sm text-slate-600">Quantity: {tire.quantity}</p>
+        <p className="text-2xl font-black text-primary mb-1">{formatPrice(tire.price)}</p>
+        <p className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">{tire.quantity}</span> available
+        </p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <ContactPurchaseButton organization={organization} />
@@ -53,4 +57,3 @@ export function TireCard({ tire, organization, yardSlug }: TireCardProps) {
     </Card>
   )
 }
-

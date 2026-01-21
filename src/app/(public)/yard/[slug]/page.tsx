@@ -34,12 +34,14 @@ export default async function YardStorefrontPage({
     .order('created_at', { ascending: false })
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       <YardHeader organization={organization} />
       <div className="container mx-auto px-4 py-8">
         <TireSearch orgId={organization.id} />
         <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-6">Available Tires</h2>
+          <h2 className="text-2xl font-black mb-6 text-foreground">
+            Available <span className="text-primary">Tires</span>
+          </h2>
           {tires && tires.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {tires.map((tire) => (
@@ -52,7 +54,7 @@ export default async function YardStorefrontPage({
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-slate-600">
+            <div className="text-center py-12 text-muted-foreground">
               <p>No tires available at this time.</p>
             </div>
           )}
@@ -61,4 +63,3 @@ export default async function YardStorefrontPage({
     </div>
   )
 }
-
