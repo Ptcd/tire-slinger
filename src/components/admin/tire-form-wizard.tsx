@@ -221,8 +221,26 @@ export function TireFormWizard() {
         flotation_rim: sizeFormat === 'flotation' ? rimDiameter : null,
       }
       
-      const { error } = await supabase.from('tires').insert(tireData)
+      const { data: newTire, error } = await supabase
+        .from('tires')
+        .insert(tireData)
+        .select()
+        .single()
+      
       if (error) throw error
+      
+      // Create marketplace task if tire is published (not draft)
+      if (publish && newTire) {
+        await supabase.from('external_tasks').insert({
+          org_id: organization.id,
+          tire_id: newTire.id,
+          platform: 'facebook_marketplace',
+          task_type: 'create_listing',
+          reason: 'new_tire',
+          status: 'open',
+          priority: 1,
+        })
+      }
       
       setShowSuccess(true)
     } catch (error) {

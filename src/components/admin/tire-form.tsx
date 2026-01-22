@@ -280,65 +280,91 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
 
       if (error) throw error
 
-      // Create tasks if listing exists and values changed
-      if (existingListing) {
-        const tasksToCreate: any[] = []
+      const tasksToCreate: any[] = []
 
-        // Check if sold out
-        if (data.quantity === 0 && tire.quantity > 0) {
-          tasksToCreate.push({
-            org_id: organization.id,
-            tire_id: tire.id,
-            external_listing_id: existingListing.id,
-            platform: 'facebook_marketplace',
-            task_type: 'delete_listing',
-            reason: 'sold_out',
-            status: 'open',
-            priority: 3,
-            metadata: { old_quantity: tire.quantity, new_quantity: 0 },
-          })
-        }
-        // Check if price changed
-        else if (data.price !== tire.price) {
-          tasksToCreate.push({
-            org_id: organization.id,
-            tire_id: tire.id,
-            external_listing_id: existingListing.id,
-            platform: 'facebook_marketplace',
-            task_type: 'update_listing',
-            reason: 'price_changed',
-            status: 'open',
-            priority: 2,
-            metadata: { old_price: tire.price, new_price: data.price },
-          })
-        }
-        // Check if quantity changed (but not to zero)
-        else if (data.quantity !== tire.quantity && data.quantity > 0) {
-          tasksToCreate.push({
-            org_id: organization.id,
-            tire_id: tire.id,
-            external_listing_id: existingListing.id,
-            platform: 'facebook_marketplace',
-            task_type: 'update_listing',
-            reason: 'quantity_changed',
-            status: 'open',
-            priority: 2,
-            metadata: { old_quantity: tire.quantity, new_quantity: data.quantity },
-          })
-        }
+      // Check if tire was deactivated (was active, now inactive)
+      if (tire.is_active && !tireData.is_active) {
+        tasksToCreate.push({
+          org_id: organization.id,
+          tire_id: tire.id,
+          external_listing_id: existingListing?.id || null,
+          platform: 'facebook_marketplace',
+          task_type: 'delete_listing',
+          reason: 'deactivated',
+          status: 'open',
+          priority: 3,
+          metadata: { was_active: true },
+        })
+      }
+      // Check if sold out
+      else if (data.quantity === 0 && tire.quantity > 0) {
+        tasksToCreate.push({
+          org_id: organization.id,
+          tire_id: tire.id,
+          external_listing_id: existingListing?.id || null,
+          platform: 'facebook_marketplace',
+          task_type: 'delete_listing',
+          reason: 'sold_out',
+          status: 'open',
+          priority: 3,
+          metadata: { old_quantity: tire.quantity, new_quantity: 0 },
+        })
+      }
+      // Check if price changed (and listing exists)
+      else if (existingListing && data.price !== tire.price) {
+        tasksToCreate.push({
+          org_id: organization.id,
+          tire_id: tire.id,
+          external_listing_id: existingListing.id,
+          platform: 'facebook_marketplace',
+          task_type: 'update_listing',
+          reason: 'price_changed',
+          status: 'open',
+          priority: 2,
+          metadata: { old_price: tire.price, new_price: data.price },
+        })
+      }
+      // Check if quantity changed (but not to zero, and listing exists)
+      else if (existingListing && data.quantity !== tire.quantity && data.quantity > 0) {
+        tasksToCreate.push({
+          org_id: organization.id,
+          tire_id: tire.id,
+          external_listing_id: existingListing.id,
+          platform: 'facebook_marketplace',
+          task_type: 'update_listing',
+          reason: 'quantity_changed',
+          status: 'open',
+          priority: 2,
+          metadata: { old_quantity: tire.quantity, new_quantity: data.quantity },
+        })
+      }
 
-        // Insert tasks if any
-        if (tasksToCreate.length > 0) {
-          await supabase.from('external_tasks').insert(tasksToCreate)
-        }
+      // Insert tasks if any
+      if (tasksToCreate.length > 0) {
+        await supabase.from('external_tasks').insert(tasksToCreate)
       }
     } else {
-      // Create new
-      const { error } = await supabase
+      // Create new tire
+      const { data: newTire, error } = await supabase
         .from('tires')
         .insert(tireData)
+        .select()
+        .single()
 
       if (error) throw error
+
+      // Create marketplace task if tire is published (not draft)
+      if (!isDraft && newTire) {
+        await supabase.from('external_tasks').insert({
+          org_id: organization.id,
+          tire_id: newTire.id,
+          platform: 'facebook_marketplace',
+          task_type: 'create_listing',
+          reason: 'new_tire',
+          status: 'open',
+          priority: 1,
+        })
+      }
     }
   }
 

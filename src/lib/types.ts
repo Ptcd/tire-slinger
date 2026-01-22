@@ -99,8 +99,8 @@ export interface ExternalTask {
   tire_id: string
   external_listing_id: string | null
   platform: 'facebook_marketplace'
-  task_type: 'delete_listing' | 'update_listing' | 'verify_listing'
-  reason: 'sold_out' | 'delisted' | 'price_changed' | 'quantity_changed' | 'manual'
+  task_type: 'create_listing' | 'delete_listing' | 'update_listing' | 'verify_listing'
+  reason: 'new_tire' | 'sold_out' | 'deleted' | 'deactivated' | 'delisted' | 'price_changed' | 'quantity_changed' | 'manual'
   status: 'open' | 'done' | 'dismissed'
   priority: number
   assigned_to: string | null

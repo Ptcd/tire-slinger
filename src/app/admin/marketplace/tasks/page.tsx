@@ -84,6 +84,8 @@ export default function MarketplaceTasksPage() {
 
   const getTaskTypeLabel = (type: string) => {
     switch (type) {
+      case 'create_listing':
+        return 'Post to Facebook'
       case 'delete_listing':
         return 'Delete Listing'
       case 'update_listing':
@@ -97,8 +99,14 @@ export default function MarketplaceTasksPage() {
 
   const getReasonLabel = (reason: string) => {
     switch (reason) {
+      case 'new_tire':
+        return 'New Listing'
       case 'sold_out':
         return 'Sold Out'
+      case 'deleted':
+        return 'Tire Deleted'
+      case 'deactivated':
+        return 'Listing Deactivated'
       case 'delisted':
         return 'Delisted'
       case 'price_changed':

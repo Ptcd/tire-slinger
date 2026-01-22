@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useUser } from '@/hooks/use-user'
 import { InventoryCard } from './inventory-card'
 import {
   Table,
@@ -43,6 +44,7 @@ export function InventoryTable({ initialTires }: InventoryTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
+  const { organization } = useUser()
   const [tires, setTires] = useState(initialTires)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
@@ -83,6 +85,20 @@ export function InventoryTable({ initialTires }: InventoryTableProps) {
     if (!confirm('Are you sure you want to delete this tire?')) return
 
     const supabase = createClient()
+    
+    // Create delete task before deleting tire
+    if (organization) {
+      await supabase.from('external_tasks').insert({
+        org_id: organization.id,
+        tire_id: tireId,
+        platform: 'facebook_marketplace',
+        task_type: 'delete_listing',
+        reason: 'deleted',
+        status: 'open',
+        priority: 3,
+      })
+    }
+    
     const { error } = await supabase.from('tires').delete().eq('id', tireId)
 
     if (error) {
