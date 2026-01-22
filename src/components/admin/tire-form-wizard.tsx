@@ -232,7 +232,6 @@ export function TireFormWizard() {
         set_price: bundlePrice ? parseFloat(bundlePrice) : null,
         images: images,
         is_active: publish,
-        status: publish ? 'published' : 'draft',
         is_lt: isLt,
         is_flotation: sizeFormat === 'flotation',
         flotation_diameter: sizeFormat === 'flotation' ? parseFloat(flotationDiameter) : null,
@@ -261,9 +260,9 @@ export function TireFormWizard() {
       }
       
       setShowSuccess(true)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving tire:', error)
-      alert('Failed to save tire')
+      alert(`Failed to save tire: ${error?.message || 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
