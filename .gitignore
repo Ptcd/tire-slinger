@@ -38,3 +38,6 @@ next-env.d.ts
 
 # data imports (licensed, not for public repo)
 /data/
+
+.vercel
+.env*.local
