@@ -33,11 +33,16 @@ export function SettingsForm({ organization }: SettingsFormProps) {
   const [copiedEmbed, setCopiedEmbed] = useState(false)
   const [embedHeight, setEmbedHeight] = useState(600)
 
-  // Get base URL
-  const baseUrl = typeof window !== 'undefined' 
-    ? window.location.origin 
-    : process.env.NEXT_PUBLIC_SITE_URL || 'https://app.tireslingers.com'
+  // Get base URL - ensure it's always a full absolute URL with protocol
+  const getBaseUrl = () => {
+    if (typeof window !== 'undefined') {
+      // Explicitly construct with protocol to avoid relative URL issues
+      return `${window.location.protocol}//${window.location.host}`
+    }
+    return process.env.NEXT_PUBLIC_SITE_URL || 'https://app.junkcarsmilwaukee.com'
+  }
   
+  const baseUrl = getBaseUrl()
   const publicUrl = `${baseUrl}/yard/${organization.slug}`
   const embedUrl = `${baseUrl}/embed/${organization.slug}`
   const embedCode = `<iframe 
@@ -440,6 +445,9 @@ export function SettingsForm({ organization }: SettingsFormProps) {
           {/* Live Preview */}
           <div className="space-y-2">
             <Label>Live Preview</Label>
+            <p className="text-xs text-muted-foreground font-mono break-all mb-2">
+              Loading: {embedUrl}
+            </p>
             <div className="border border-border rounded-lg overflow-hidden bg-muted">
               <iframe
                 src={embedUrl}
