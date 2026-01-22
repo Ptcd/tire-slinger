@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useForm } from 'react-hook-form'
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
 import { Copy, Check, ExternalLink } from 'lucide-react'
-import type { Organization } from '@/lib/types'
+import type { Organization, InventorySettings } from '@/lib/types'
 
 interface SettingsFormProps {
   organization: Organization
@@ -32,6 +32,18 @@ export function SettingsForm({ organization }: SettingsFormProps) {
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedEmbed, setCopiedEmbed] = useState(false)
   const [embedHeight, setEmbedHeight] = useState(600)
+  const [inventorySettings, setInventorySettings] = useState<Partial<InventorySettings>>({
+    sales_window_days: 90,
+    search_window_days: 90,
+    min_search_threshold: 3,
+    stale_age_days: 1800,
+    overstock_percent: 50,
+    safety_multiplier: 2.0,
+    enable_search_demand: true,
+    enable_request_demand: true,
+  })
+  const [loadingSettings, setLoadingSettings] = useState(true)
+  const [refreshingRecs, setRefreshingRecs] = useState(false)
 
   // Get base URL - ensure it's always a full absolute URL with protocol
   const getBaseUrl = () => {
@@ -72,6 +84,49 @@ export function SettingsForm({ organization }: SettingsFormProps) {
     defaultValues: organization,
   })
 
+  useEffect(() => {
+    async function loadInventorySettings() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('inventory_settings')
+        .select('*')
+        .eq('org_id', organization.id)
+        .single()
+      
+      if (data) {
+        setInventorySettings(data)
+      }
+      setLoadingSettings(false)
+    }
+    
+    if (organization.id) {
+      loadInventorySettings()
+    }
+  }, [organization.id])
+
+  const saveInventorySettings = async () => {
+    const supabase = createClient()
+    await supabase
+      .from('inventory_settings')
+      .upsert({
+        org_id: organization.id,
+        ...inventorySettings,
+        updated_at: new Date().toISOString(),
+      })
+  }
+
+  const refreshRecommendations = async () => {
+    setRefreshingRecs(true)
+    try {
+      await fetch('/api/recommendations/refresh', { method: 'POST' })
+      alert('Recommendations refreshed!')
+    } catch (e) {
+      alert('Failed to refresh recommendations')
+    } finally {
+      setRefreshingRecs(false)
+    }
+  }
+
   const onSubmit = async (data: Organization) => {
     setSaving(true)
     try {
@@ -82,6 +137,8 @@ export function SettingsForm({ organization }: SettingsFormProps) {
         .eq('id', organization.id)
 
       if (error) throw error
+
+      await saveInventorySettings()
 
       router.refresh()
       alert('Settings saved successfully')
@@ -520,6 +577,135 @@ export function SettingsForm({ organization }: SettingsFormProps) {
             <p className="text-sm text-muted-foreground">
               This is how the widget will appear on your website
             </p>
+          </div>
+        </div>
+
+        <Separator className="my-8" />
+
+        {/* Inventory Intelligence Settings */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Inventory Intelligence</h2>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={refreshRecommendations}
+              disabled={refreshingRecs}
+            >
+              {refreshingRecs ? 'Refreshing...' : 'Recalculate Now'}
+            </Button>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Yard Capacity (total tires)</Label>
+              <Input
+                type="number"
+                {...form.register('capacity_total_tires', { valueAsNumber: true })}
+              />
+              <p className="text-xs text-muted-foreground">Maximum tires your yard can hold</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Sales Analysis Window (days)</Label>
+              <Input
+                type="number"
+                value={inventorySettings.sales_window_days}
+                onChange={(e) => setInventorySettings({
+                  ...inventorySettings,
+                  sales_window_days: parseInt(e.target.value) || 90
+                })}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Search Analysis Window (days)</Label>
+              <Input
+                type="number"
+                value={inventorySettings.search_window_days}
+                onChange={(e) => setInventorySettings({
+                  ...inventorySettings,
+                  search_window_days: parseInt(e.target.value) || 90
+                })}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Min Searches to Consider (threshold)</Label>
+              <Input
+                type="number"
+                value={inventorySettings.min_search_threshold}
+                onChange={(e) => setInventorySettings({
+                  ...inventorySettings,
+                  min_search_threshold: parseInt(e.target.value) || 3
+                })}
+              />
+              <p className="text-xs text-muted-foreground">Min no-result searches before recommending a size</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Stale Age Threshold (days)</Label>
+              <Input
+                type="number"
+                value={inventorySettings.stale_age_days}
+                onChange={(e) => setInventorySettings({
+                  ...inventorySettings,
+                  stale_age_days: parseInt(e.target.value) || 1800
+                })}
+              />
+              <p className="text-xs text-muted-foreground">~5 years = 1825 days</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Overstock Threshold (%)</Label>
+              <Input
+                type="number"
+                value={inventorySettings.overstock_percent}
+                onChange={(e) => setInventorySettings({
+                  ...inventorySettings,
+                  overstock_percent: parseInt(e.target.value) || 50
+                })}
+              />
+              <p className="text-xs text-muted-foreground">Flag as overstock when this % above target</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Safety Multiplier</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={inventorySettings.safety_multiplier}
+                onChange={(e) => setInventorySettings({
+                  ...inventorySettings,
+                  safety_multiplier: parseFloat(e.target.value) || 2.0
+                })}
+              />
+              <p className="text-xs text-muted-foreground">Months of demand to keep in stock (e.g., 2 = 2 months)</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-6">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={inventorySettings.enable_search_demand ?? true}
+                onCheckedChange={(checked) => setInventorySettings({
+                  ...inventorySettings,
+                  enable_search_demand: checked
+                })}
+              />
+              <Label>Use search data for demand</Label>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={inventorySettings.enable_request_demand ?? true}
+                onCheckedChange={(checked) => setInventorySettings({
+                  ...inventorySettings,
+                  enable_request_demand: checked
+                })}
+              />
+              <Label>Use customer requests for demand</Label>
+            </div>
           </div>
         </div>
 

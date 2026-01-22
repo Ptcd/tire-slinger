@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/form'
 import { TIRE_TYPES, TIRE_CONDITIONS, COMMON_WIDTHS, COMMON_ASPECT_RATIOS, COMMON_RIM_DIAMETERS, SALE_TYPES } from '@/lib/constants'
 import type { Tire, TireFormData, BrandOption, ModelOption } from '@/lib/types'
+import { toSizeKey } from '@/lib/size-utils'
 
 interface TireFormProps {
   tire?: Tire
@@ -273,12 +274,36 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
         .maybeSingle()
 
       // Update tire
+      // Add size_key to tireData
+      const sizeKey = toSizeKey(data.width, data.aspect_ratio, data.rim_diameter)
+      tireData.size_key = sizeKey
+      
       const { error } = await supabase
         .from('tires')
         .update(tireData)
         .eq('id', tire.id)
 
       if (error) throw error
+
+      // Log sale event if quantity decreased
+      if (data.quantity < tire.quantity) {
+        const quantitySold = tire.quantity - data.quantity
+        
+        await supabase.from('sales_events').insert({
+          org_id: organization!.id,
+          size_key: sizeKey,
+          quantity_sold: quantitySold,
+          packaging_type: data.sale_type || 'individual',
+          unit_price: data.price,
+          tire_id: tire.id,
+        })
+        
+        // Update last_sold_at
+        await supabase
+          .from('tires')
+          .update({ last_sold_at: new Date().toISOString() })
+          .eq('id', tire.id)
+      }
 
       const tasksToCreate: any[] = []
 
@@ -345,9 +370,16 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
       }
     } else {
       // Create new tire
+      // Add size_key to tireData
+      const sizeKey = toSizeKey(data.width, data.aspect_ratio, data.rim_diameter)
+      tireData.size_key = sizeKey
+      
       const { data: newTire, error } = await supabase
         .from('tires')
-        .insert(tireData)
+        .insert({
+          ...tireData,
+          org_id: organization!.id,
+        })
         .select()
         .single()
 

@@ -19,6 +19,9 @@ export interface Organization {
   require_images?: boolean
   require_tread_depth?: boolean
   require_dot?: boolean
+  capacity_total_tires: number
+  default_packaging_type: 'individual' | 'pair' | 'set'
+  recommendations_stale: boolean
   created_at: string
   updated_at: string
 }
@@ -59,6 +62,8 @@ export interface Tire {
   is_flotation: boolean
   flotation_diameter: number | null
   flotation_width: number | null
+  size_key: string | null
+  last_sold_at: string | null
   created_at: string
   updated_at: string
 }
@@ -160,5 +165,95 @@ export interface TireFormData {
   set_price: number | null
   description: string
   images: string[]
+}
+
+// =============================================
+// INVENTORY INTELLIGENCE LAYER TYPES
+// =============================================
+
+export interface SalesEvent {
+  id: string
+  org_id: string
+  size_key: string
+  quantity_sold: number
+  packaging_type: 'individual' | 'pair' | 'set'
+  unit_price: number | null
+  tire_id: string | null
+  sold_at: string
+}
+
+export interface SearchEvent {
+  id: string
+  org_id: string
+  query: string | null
+  requested_size: string | null
+  width: number | null
+  aspect_ratio: number | null
+  rim_diameter: number | null
+  requested_quantity: number
+  result_count: number
+  user_role: string
+  searched_at: string
+}
+
+export interface CustomerRequest {
+  id: string
+  org_id: string
+  customer_name: string | null
+  contact_info: string
+  requested_size: string
+  width: number | null
+  aspect_ratio: number | null
+  rim_diameter: number | null
+  requested_quantity: number
+  notes: string | null
+  status: 'new' | 'in_progress' | 'fulfilled' | 'dismissed'
+  handled_by: string | null
+  submitted_at: string
+  updated_at: string
+}
+
+export interface StockRecommendation {
+  id: string
+  org_id: string
+  size_key: string
+  size_display: string
+  current_stock: number
+  target_stock: number
+  need_units: number
+  action: 'stock' | 'purge' | 'hold'
+  priority: 'high' | 'medium' | 'low'
+  flag: 'normal' | 'overstock' | 'stale' | null
+  sales_90d: number
+  searches_90d: number
+  requests_90d: number
+  avg_age_days: number | null
+  oldest_age_days: number | null
+  reasons: string[]
+  computed_at: string
+}
+
+export interface InventorySettings {
+  org_id: string
+  sales_window_days: number
+  search_window_days: number
+  min_search_threshold: number
+  stale_age_days: number
+  overstock_percent: number
+  safety_multiplier: number
+  packaging_set_size: number
+  enable_search_demand: boolean
+  enable_request_demand: boolean
+  created_at: string
+  updated_at: string
+}
+
+// Form data for customer request submission
+export interface CustomerRequestFormData {
+  customer_name?: string
+  contact_info: string
+  requested_size: string
+  requested_quantity: number
+  notes?: string
 }
 

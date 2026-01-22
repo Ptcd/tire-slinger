@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { YardHeader } from '@/components/storefront/yard-header'
 import { TireCard } from '@/components/storefront/tire-card'
 import { TireSearch } from '@/components/storefront/tire-search'
+import { TireRequestForm } from '@/components/storefront/tire-request-form'
+import { toSizeKey } from '@/lib/size-utils'
 import type { Tire } from '@/lib/types'
 
 interface SearchParams {
@@ -104,6 +106,30 @@ export default async function YardStorefrontPage({
   const hasFilters = search.width || search.aspect_ratio || search.rim_diameter || 
                      (search.year && search.make && search.model)
 
+  // Log search event if filters were applied and no results
+  if (hasFilters && (!tires || tires.length === 0)) {
+    // Log the no-result search
+    let sizeKey: string | null = null
+    if (search.width && search.aspect_ratio && search.rim_diameter) {
+      sizeKey = toSizeKey(
+        parseInt(search.width),
+        parseInt(search.aspect_ratio),
+        parseInt(search.rim_diameter)
+      )
+    }
+    
+    await supabase.from('search_events').insert({
+      org_id: organization.id,
+      query: Object.entries(search).filter(([_, v]) => v).map(([k, v]) => `${k}=${v}`).join('&'),
+      requested_size: sizeKey,
+      width: search.width ? parseInt(search.width) : null,
+      aspect_ratio: search.aspect_ratio ? parseInt(search.aspect_ratio) : null,
+      rim_diameter: search.rim_diameter ? parseInt(search.rim_diameter) : null,
+      result_count: 0,
+      user_role: 'customer',
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <YardHeader organization={organization} />
@@ -142,8 +168,20 @@ export default async function YardStorefrontPage({
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>{hasFilters ? 'No tires match your search.' : 'No tires available at this time.'}</p>
+            <div className="space-y-8">
+              <div className="text-center py-12 text-muted-foreground">
+                <p>{hasFilters ? 'No tires match your search.' : 'No tires available at this time.'}</p>
+              </div>
+              {hasFilters && (!tires || tires.length === 0) && (
+                <TireRequestForm 
+                  orgId={organization.id} 
+                  orgName={organization.name}
+                  prefillSize={search.width && search.aspect_ratio && search.rim_diameter 
+                    ? `${search.width}/${search.aspect_ratio}R${search.rim_diameter}`
+                    : undefined
+                  }
+                />
+              )}
             </div>
           )}
         </div>

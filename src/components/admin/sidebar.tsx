@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -12,6 +13,9 @@ import {
   Settings,
   LogOut,
   CircleDot,
+  TrendingUp,
+  Inbox,
+  ChevronDown,
 } from 'lucide-react'
 import { useUser } from '@/hooks/use-user'
 import { createClient } from '@/lib/supabase/client'
@@ -22,6 +26,16 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/inventory', label: 'Inventory', icon: Package },
   { href: '/admin/import', label: 'Import', icon: Upload },
+  { 
+    href: '/admin/stock', 
+    label: 'Stock Intelligence', 
+    icon: TrendingUp,
+    children: [
+      { href: '/admin/stock/simple', label: 'Simple View' },
+      { href: '/admin/stock/explained', label: 'Explained' },
+    ]
+  },
+  { href: '/admin/requests', label: 'Requests', icon: Inbox, hasBadge: true },
   { href: '/admin/marketplace/tasks', label: 'Marketplace Tasks', icon: ShoppingBag },
   { href: '/admin/aging', label: 'Aging (DOT)', icon: Calendar },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
@@ -31,12 +45,63 @@ export function Sidebar() {
   const pathname = usePathname()
   const { organization } = useUser()
   const router = useRouter()
+  const [newRequestCount, setNewRequestCount] = useState(0)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['/admin/stock']))
 
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
+  }
+
+  // Load new request count
+  useEffect(() => {
+    if (!organization) return
+    
+    async function loadCount() {
+      if (!organization) return
+      const supabase = createClient()
+      const { count } = await supabase
+        .from('customer_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('org_id', organization.id)
+        .eq('status', 'new')
+      
+      setNewRequestCount(count || 0)
+    }
+    
+    loadCount()
+    
+    // Subscribe to changes
+    const supabase = createClient()
+    const channel = supabase
+      .channel('request_count')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'customer_requests',
+          filter: `org_id=eq.${organization.id}`,
+        },
+        () => loadCount()
+      )
+      .subscribe()
+    
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [organization])
+
+  const toggleExpanded = (href: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(href)) {
+      newExpanded.delete(href)
+    } else {
+      newExpanded.add(href)
+    }
+    setExpandedItems(newExpanded)
   }
 
   // Only show Aging if DOT tracking is enabled
@@ -72,20 +137,72 @@ export function Sidebar() {
         {filteredNavItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
+          const hasChildren = item.children && item.children.length > 0
+          const isExpanded = expandedItems.has(item.href)
+          
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            <div key={item.href}>
+              {hasChildren ? (
+                <>
+                  <button
+                    onClick={() => toggleExpanded(item.href)}
+                    className={cn(
+                      'flex items-center justify-between w-full rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-5 w-5" />
+                      {item.label}
+                    </div>
+                    <ChevronDown className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
+                  </button>
+                  {isExpanded && (
+                    <div className="ml-8 mt-1 space-y-1">
+                      {item.children.map((child) => {
+                        const childActive = pathname === child.href
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={cn(
+                              'block rounded-lg px-3 py-2 text-sm transition-all',
+                              childActive
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            )}
+                          >
+                            {child.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : item.hasBadge && newRequestCount > 0
+                        ? 'text-red-600 hover:bg-muted hover:text-red-700'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                  {item.hasBadge && newRequestCount > 0 && (
+                    <span className="ml-auto bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {newRequestCount}
+                    </span>
+                  )}
+                </Link>
               )}
-            >
-              <Icon className="h-5 w-5" />
-              {item.label}
-            </Link>
+            </div>
           )
         })}
       </nav>

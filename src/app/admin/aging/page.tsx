@@ -26,7 +26,8 @@ import {
 import { AlertTriangle, Calendar, ExternalLink } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import Link from 'next/link'
-import type { Tire, Organization } from '@/lib/types'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import type { Tire, Organization, StockRecommendation } from '@/lib/types'
 
 interface TireWithAge extends Tire {
   age_years: number
@@ -187,23 +188,35 @@ export default function AgingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Tire Aging (DOT)</h1>
-          <p className="text-muted-foreground">
-            Manage tires approaching expiration (Max age: {organization.dot_max_age_years} years)
-          </p>
+          <h1 className="text-3xl font-bold">Tire Aging & Inventory Health</h1>
+          <p className="text-muted-foreground">Track DOT aging and identify overstock</p>
         </div>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Tires</SelectItem>
-            <SelectItem value="expired">Expired</SelectItem>
-            <SelectItem value="warning">Warning ({warningCount})</SelectItem>
-            <SelectItem value="ok">OK</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
+
+      <Tabs defaultValue="aging" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="aging">DOT Aging</TabsTrigger>
+          <TabsTrigger value="overstock">Overstock / Stale</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="aging">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <p className="text-muted-foreground">
+                Manage tires approaching expiration (Max age: {organization.dot_max_age_years} years)
+              </p>
+              <Select value={filter} onValueChange={setFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tires</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="warning">Warning ({warningCount})</SelectItem>
+                  <SelectItem value="ok">OK</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -363,6 +376,106 @@ export default function AgingPage() {
           </p>
         </CardContent>
       </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="overstock">
+          <OverstockStaleTab orgId={organization.id} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+function OverstockStaleTab({ orgId }: { orgId: string }) {
+  const [recommendations, setRecommendations] = useState<StockRecommendation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<string>('all')
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('stock_recommendations')
+        .select('*')
+        .eq('org_id', orgId)
+        .in('flag', ['overstock', 'stale'])
+        .order('flag', { ascending: true })
+        .order('oldest_age_days', { ascending: false })
+      
+      setRecommendations(data || [])
+      setLoading(false)
+    }
+    load()
+  }, [orgId])
+
+  const filtered = filter === 'all' 
+    ? recommendations 
+    : recommendations.filter(r => r.flag === filter)
+
+  if (loading) return <div className="py-8 text-center">Loading...</div>
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Select value={filter} onValueChange={setFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Issues</SelectItem>
+            <SelectItem value="overstock">Overstock Only</SelectItem>
+            <SelectItem value="stale">Stale Only</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filtered.length === 0 ? (
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground">No overstock or stale inventory found. Great job!</p>
+        </Card>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Size</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Current Stock</TableHead>
+                <TableHead className="text-right">Target</TableHead>
+                <TableHead className="text-right">Excess</TableHead>
+                <TableHead>Age</TableHead>
+                <TableHead>Reason</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((rec) => (
+                <TableRow key={rec.id}>
+                  <TableCell className="font-medium">{rec.size_display}</TableCell>
+                  <TableCell>
+                    <Badge variant={rec.flag === 'stale' ? 'destructive' : 'secondary'}>
+                      {rec.flag === 'stale' ? 'STALE' : 'OVERSTOCK'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{rec.current_stock}</TableCell>
+                  <TableCell className="text-right">{rec.target_stock}</TableCell>
+                  <TableCell className="text-right font-bold text-red-600">
+                    {Math.abs(rec.need_units)}
+                  </TableCell>
+                  <TableCell>
+                    {rec.oldest_age_days 
+                      ? `${Math.round(rec.oldest_age_days / 365 * 10) / 10} yrs`
+                      : '-'}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {(rec.reasons || [])[0] || '-'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   )
 }
