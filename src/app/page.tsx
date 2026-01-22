@@ -1,11 +1,36 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package, Search, Phone, CircleDot, Zap, Shield } from 'lucide-react'
+import { Package, Search, Phone, CircleDot, Zap, Shield, LogIn, LayoutDashboard } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {/* Header with Login/Dashboard Button */}
+      <header className="relative z-20 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-4 flex justify-end">
+          {user ? (
+            <Link href="/admin">
+              <Button variant="outline" className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <Button variant="outline" className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+              </Button>
+            </Link>
+          )}
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Tread pattern background */}
