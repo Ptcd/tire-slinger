@@ -1,0 +1,202 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+/* Tire-Themed Dark Color Palette */
+:root {
+  --radius: 0.625rem;
+  /* Dark asphalt/rubber backgrounds */
+  --background: #1a1a1a;
+  --foreground: #f4f4f5;
+  /* Cards - slightly lighter dark */
+  --card: #252525;
+  --card-foreground: #f4f4f5;
+  /* Popover */
+  --popover: #2d2d2d;
+  --popover-foreground: #f4f4f5;
+  /* Primary - Bright Yellow (road marking yellow) */
+  --primary: #facc15;
+  --primary-foreground: #1a1a1a;
+  /* Secondary - Dark gray */
+  --secondary: #3f3f46;
+  --secondary-foreground: #f4f4f5;
+  /* Muted - Darker elements */
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  /* Accent - Yellow highlight */
+  --accent: #facc15;
+  --accent-foreground: #1a1a1a;
+  /* Destructive - Red */
+  --destructive: #ef4444;
+  /* Borders - subtle */
+  --border: #3f3f46;
+  --input: #3f3f46;
+  --ring: #facc15;
+  /* Chart colors */
+  --chart-1: #facc15;
+  --chart-2: #22c55e;
+  --chart-3: #3b82f6;
+  --chart-4: #f97316;
+  --chart-5: #a855f7;
+  /* Sidebar - even darker */
+  --sidebar: #141414;
+  --sidebar-foreground: #f4f4f5;
+  --sidebar-primary: #facc15;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-foreground: #f4f4f5;
+  --sidebar-border: #3f3f46;
+  --sidebar-ring: #facc15;
+}
+
+/* Keep dark mode same as root (already dark) */
+.dark {
+  --background: #0f0f0f;
+  --foreground: #f4f4f5;
+  --card: #1a1a1a;
+  --card-foreground: #f4f4f5;
+  --popover: #1a1a1a;
+  --popover-foreground: #f4f4f5;
+  --primary: #facc15;
+  --primary-foreground: #1a1a1a;
+  --secondary: #27272a;
+  --secondary-foreground: #f4f4f5;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #facc15;
+  --accent-foreground: #1a1a1a;
+  --destructive: #ef4444;
+  --border: #3f3f46;
+  --input: #3f3f46;
+  --ring: #facc15;
+  --chart-1: #facc15;
+  --chart-2: #22c55e;
+  --chart-3: #3b82f6;
+  --chart-4: #f97316;
+  --chart-5: #a855f7;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #f4f4f5;
+  --sidebar-primary: #facc15;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #f4f4f5;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #facc15;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Tire Tread Pattern Background */
+.tread-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23facc15' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Road Stripe Decoration */
+.road-stripe {
+  background: repeating-linear-gradient(
+    90deg,
+    #facc15 0px,
+    #facc15 20px,
+    transparent 20px,
+    transparent 40px
+  );
+  height: 4px;
+}
+
+/* Rubber texture overlay */
+.rubber-texture {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  /* Minimum 44px touch targets */
+  button,
+  a,
+  [role="button"],
+  select,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+  }
+  
+  /* Larger form inputs - prevents iOS zoom */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Full-width buttons on mobile */
+  .btn-mobile-full {
+    width: 100%;
+  }
+  
+  /* Add padding at bottom for fixed nav */
+  main {
+    padding-bottom: 80px !important;
+  }
+  
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  /* Hide mobile-only elements */
+  .mobile-only {
+    display: none !important;
+  }
+}
