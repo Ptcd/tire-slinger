@@ -49,3 +49,13 @@ export const COMMON_RIM_DIAMETERS = [
   14, 15, 16, 17, 18, 19, 20, 21, 22, 24
 ] as const
 
+// Common flotation diameters (inches)
+export const FLOTATION_DIAMETERS = [
+  28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 44
+] as const
+
+// Common flotation widths (inches)
+export const FLOTATION_WIDTHS = [
+  9.50, 10.50, 11.50, 12.50, 13.50, 14.50, 15.50
+] as const
+

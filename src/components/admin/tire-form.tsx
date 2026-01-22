@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -27,8 +28,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { TIRE_BRANDS, TIRE_TYPES, TIRE_CONDITIONS, COMMON_WIDTHS, COMMON_ASPECT_RATIOS, COMMON_RIM_DIAMETERS } from '@/lib/constants'
-import type { Tire, TireFormData } from '@/lib/types'
+import { TIRE_TYPES, TIRE_CONDITIONS, COMMON_WIDTHS, COMMON_ASPECT_RATIOS, COMMON_RIM_DIAMETERS } from '@/lib/constants'
+import type { Tire, TireFormData, BrandOption, ModelOption } from '@/lib/types'
 
 interface TireFormProps {
   tire?: Tire
@@ -40,6 +41,26 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
   const { organization } = useUser()
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  
+  // Size format and catalog state
+  const [sizeFormat, setSizeFormat] = useState<'standard' | 'flotation'>(
+    tire?.is_flotation ? 'flotation' : 'standard'
+  )
+  const [isLt, setIsLt] = useState(tire?.is_lt ?? false)
+  const [availableBrands, setAvailableBrands] = useState<BrandOption[]>([])
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([])
+  const [loadingBrands, setLoadingBrands] = useState(false)
+  const [loadingModels, setLoadingModels] = useState(false)
+  const [customBrand, setCustomBrand] = useState('')
+  const [showCustomBrand, setShowCustomBrand] = useState(false)
+  
+  // Flotation size state
+  const [flotationDiameter, setFlotationDiameter] = useState<string>(
+    tire?.flotation_diameter?.toString() || ''
+  )
+  const [flotationWidth, setFlotationWidth] = useState<string>(
+    tire?.flotation_width?.toString() || ''
+  )
 
   const form = useForm<TireFormData>({
     defaultValues: tire ? {
@@ -77,6 +98,97 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
 
   const formData = form.watch()
 
+  // Fetch brands when size changes
+  useEffect(() => {
+    async function fetchBrands() {
+      // Only fetch if we have a complete size
+      if (sizeFormat === 'standard') {
+        if (!formData.width || !formData.aspect_ratio || !formData.rim_diameter) {
+          setAvailableBrands([])
+          return
+        }
+      } else {
+        if (!flotationDiameter || !flotationWidth || !formData.rim_diameter) {
+          setAvailableBrands([])
+          return
+        }
+      }
+      
+      setLoadingBrands(true)
+      
+      const params = new URLSearchParams()
+      if (sizeFormat === 'flotation') {
+        params.set('is_flotation', 'true')
+        params.set('flotation_diameter', flotationDiameter)
+        params.set('flotation_width', flotationWidth)
+        params.set('flotation_rim', formData.rim_diameter.toString())
+      } else {
+        params.set('width', formData.width.toString())
+        params.set('aspect_ratio', formData.aspect_ratio.toString())
+        params.set('rim_diameter', formData.rim_diameter.toString())
+      }
+      if (isLt) params.set('is_lt', 'true')
+      
+      try {
+        const res = await fetch(`/api/tire-catalog/brands?${params}`)
+        const data = await res.json()
+        setAvailableBrands(data.brands || [])
+      } catch (err) {
+        console.error('Error fetching brands:', err)
+        setAvailableBrands([])
+      } finally {
+        setLoadingBrands(false)
+      }
+    }
+    
+    fetchBrands()
+  }, [formData.width, formData.aspect_ratio, formData.rim_diameter, flotationDiameter, flotationWidth, isLt, sizeFormat])
+
+  // Fetch models when brand changes
+  useEffect(() => {
+    async function fetchModels() {
+      if (!formData.brand || showCustomBrand) {
+        setAvailableModels([])
+        return
+      }
+      
+      setLoadingModels(true)
+      
+      const params = new URLSearchParams()
+      params.set('brand', formData.brand)
+      
+      if (sizeFormat === 'flotation') {
+        params.set('is_flotation', 'true')
+        params.set('flotation_diameter', flotationDiameter)
+        params.set('flotation_width', flotationWidth)
+        params.set('flotation_rim', formData.rim_diameter.toString())
+      } else {
+        params.set('width', formData.width.toString())
+        params.set('aspect_ratio', formData.aspect_ratio.toString())
+        params.set('rim_diameter', formData.rim_diameter.toString())
+      }
+      if (isLt) params.set('is_lt', 'true')
+      
+      try {
+        const res = await fetch(`/api/tire-catalog/models?${params}`)
+        const data = await res.json()
+        setAvailableModels(data.models || [])
+        
+        // Auto-select if only one model
+        if (data.models?.length === 1) {
+          form.setValue('model', data.models[0].model_name)
+        }
+      } catch (err) {
+        console.error('Error fetching models:', err)
+        setAvailableModels([])
+      } finally {
+        setLoadingModels(false)
+      }
+    }
+    
+    fetchModels()
+  }, [formData.brand, formData.width, formData.aspect_ratio, formData.rim_diameter, flotationDiameter, flotationWidth, isLt, sizeFormat, showCustomBrand, form])
+
   // Autosave for edit mode
   useAutosave(
     formData,
@@ -94,11 +206,37 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
     if (!organization) return
 
     const supabase = createClient()
-    const tireData = {
+    
+    // Calculate size_display
+    let sizeDisplay = ''
+    if (sizeFormat === 'flotation') {
+      const dia = parseFloat(flotationDiameter) || 0
+      const wid = parseFloat(flotationWidth) || 0
+      const rim = data.rim_diameter
+      sizeDisplay = `${dia}X${wid}R${rim}`
+    } else {
+      sizeDisplay = `${data.width}/${data.aspect_ratio}R${data.rim_diameter}`
+      if (isLt) {
+        sizeDisplay = `LT ${sizeDisplay}`
+      }
+    }
+    
+    // Calculate diameter_inches
+    let diameterInches = 0
+    if (sizeFormat === 'flotation') {
+      diameterInches = parseFloat(flotationDiameter) || 0
+    } else {
+      // Standard calculation: rim + 2 * (width * aspect_ratio / 100) / 25.4
+      diameterInches = data.rim_diameter + 2 * (data.width * data.aspect_ratio / 100) / 25.4
+    }
+    
+    const tireData: any = {
       org_id: organization.id,
-      width: data.width,
-      aspect_ratio: data.aspect_ratio,
+      width: sizeFormat === 'standard' ? data.width : 0,
+      aspect_ratio: sizeFormat === 'standard' ? data.aspect_ratio : 0,
       rim_diameter: data.rim_diameter,
+      size_display: sizeDisplay,
+      diameter_inches: diameterInches,
       brand: data.brand || null,
       model: data.model || null,
       tire_type: data.tire_type,
@@ -110,6 +248,10 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
       quantity: data.quantity,
       description: data.description || null,
       images: data.images,
+      is_lt: isLt,
+      is_flotation: sizeFormat === 'flotation',
+      flotation_diameter: sizeFormat === 'flotation' ? parseFloat(flotationDiameter) : null,
+      flotation_width: sizeFormat === 'flotation' ? parseFloat(flotationWidth) : null,
     }
 
     if (tire) {
@@ -239,90 +381,179 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
           </div>
         </div>
 
-        {/* Size */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <FormField
-            control={form.control}
-            name="width"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Width</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                  defaultValue={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select width" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {COMMON_WIDTHS.map((w) => (
-                      <SelectItem key={w} value={w.toString()}>
-                        {w}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="aspect_ratio"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Aspect Ratio</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                  defaultValue={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select ratio" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {COMMON_ASPECT_RATIOS.map((ar) => (
-                      <SelectItem key={ar} value={ar.toString()}>
-                        {ar}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="rim_diameter"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Rim Diameter</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                  defaultValue={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select rim" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {COMMON_RIM_DIAMETERS.map((rd) => (
-                      <SelectItem key={rd} value={rd.toString()}>
-                        {rd}"
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Size Format Toggle */}
+        <div className="flex gap-2 mb-4">
+          <Button
+            type="button"
+            variant={sizeFormat === 'standard' ? 'default' : 'outline'}
+            onClick={() => {
+              setSizeFormat('standard')
+              setFlotationDiameter('')
+              setFlotationWidth('')
+            }}
+            className={sizeFormat === 'standard' ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+          >
+            Standard Size
+          </Button>
+          <Button
+            type="button"
+            variant={sizeFormat === 'flotation' ? 'default' : 'outline'}
+            onClick={() => {
+              setSizeFormat('flotation')
+              form.setValue('width', 0)
+              form.setValue('aspect_ratio', 0)
+            }}
+            className={sizeFormat === 'flotation' ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+          >
+            Flotation Size
+          </Button>
         </div>
+
+        {/* LT Checkbox */}
+        <div className="flex items-center gap-2 mb-4">
+          <Checkbox
+            id="is_lt"
+            checked={isLt}
+            onCheckedChange={(checked) => setIsLt(checked === true)}
+          />
+          <Label htmlFor="is_lt">Light Truck (LT)</Label>
+        </div>
+
+        {/* Size Inputs */}
+        {sizeFormat === 'standard' ? (
+          <div className="grid gap-4 md:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="width"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Width</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    defaultValue={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select width" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {COMMON_WIDTHS.map((w) => (
+                        <SelectItem key={w} value={w.toString()}>
+                          {w}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="aspect_ratio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Aspect Ratio</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    defaultValue={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select ratio" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {COMMON_ASPECT_RATIOS.map((ar) => (
+                        <SelectItem key={ar} value={ar.toString()}>
+                          {ar}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="rim_diameter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rim Diameter</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    defaultValue={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select rim" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {COMMON_RIM_DIAMETERS.map((rd) => (
+                        <SelectItem key={rd} value={rd.toString()}>
+                          {rd}"
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-3">
+            <div>
+              <Label>Diameter (inches)</Label>
+              <Input
+                type="number"
+                value={flotationDiameter}
+                onChange={(e) => setFlotationDiameter(e.target.value)}
+                placeholder="35"
+              />
+            </div>
+            <div>
+              <Label>Width (inches)</Label>
+              <Input
+                type="number"
+                step="0.5"
+                value={flotationWidth}
+                onChange={(e) => setFlotationWidth(e.target.value)}
+                placeholder="12.50"
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="rim_diameter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rim</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    defaultValue={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select rim" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {COMMON_RIM_DIAMETERS.map((rd) => (
+                        <SelectItem key={rd} value={rd.toString()}>
+                          {rd}"
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         {/* Brand and Model */}
         <div className="grid gap-4 md:grid-cols-2">
@@ -332,20 +563,61 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Brand</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select brand" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {TIRE_BRANDS.map((brand) => (
-                      <SelectItem key={brand} value={brand}>
-                        {brand}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {showCustomBrand ? (
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input
+                        value={customBrand}
+                        onChange={(e) => {
+                          setCustomBrand(e.target.value)
+                          field.onChange(e.target.value)
+                        }}
+                        placeholder="Enter brand name"
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowCustomBrand(false)
+                        setCustomBrand('')
+                        field.onChange('')
+                        form.setValue('model', '')
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    value={field.value || ''}
+                    onValueChange={(value) => {
+                      if (value === '__custom__') {
+                        setShowCustomBrand(true)
+                      } else {
+                        field.onChange(value)
+                        form.setValue('model', '')
+                      }
+                    }}
+                    disabled={loadingBrands}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={loadingBrands ? 'Loading...' : 'Select brand'} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {availableBrands.map((b) => (
+                        <SelectItem key={b.brand} value={b.brand}>
+                          {b.brand} ({b.count})
+                        </SelectItem>
+                      ))}
+                      {organization?.allow_custom_brand && (
+                        <SelectItem value="__custom__">Other (custom entry)...</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -355,10 +627,30 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
             name="model"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Model</FormLabel>
-                <FormControl>
-                  <Input placeholder="E.g., Defender T+H" {...field} />
-                </FormControl>
+                <FormLabel>
+                  Model {organization?.require_model_selection && <span className="text-red-500">*</span>}
+                </FormLabel>
+                <Select
+                  value={field.value || ''}
+                  onValueChange={(value) => field.onChange(value === '__unknown__' ? '' : value)}
+                  disabled={!formData.brand || loadingModels || showCustomBrand}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingModels ? 'Loading...' : showCustomBrand ? 'Enter brand first' : 'Select model'} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {availableModels.map((m) => (
+                      <SelectItem key={m.model_name} value={m.model_name}>
+                        {m.model_name} {m.category && `(${m.category})`}
+                      </SelectItem>
+                    ))}
+                    {!organization?.require_model_selection && (
+                      <SelectItem value="__unknown__">Unknown / Skip</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

@@ -14,6 +14,8 @@ export interface Organization {
   dot_tracking_enabled: boolean
   dot_max_age_years: number
   dot_warning_days: number
+  allow_custom_brand: boolean
+  require_model_selection: boolean
   created_at: string
   updated_at: string
 }
@@ -48,6 +50,10 @@ export interface Tire {
   images: string[]
   description: string | null
   is_active: boolean
+  is_lt: boolean
+  is_flotation: boolean
+  flotation_diameter: number | null
+  flotation_width: number | null
   created_at: string
   updated_at: string
 }
@@ -110,6 +116,36 @@ export interface AuditLog {
   entity_id: string | null
   details: Record<string, unknown> | null
   created_at: string
+}
+
+// Tire catalog entry (from Teoalida "Tires by brand" database)
+export interface TireCatalog {
+  id: string
+  brand: string
+  model_name: string
+  category: string | null
+  // Standard size fields
+  width: number | null
+  aspect_ratio: number | null
+  rim_diameter: number | null
+  // Flotation size fields
+  flotation_diameter: number | null
+  flotation_width: number | null
+  flotation_rim: number | null
+  // Common
+  is_lt: boolean
+  size_display: string
+}
+
+// For dropdown options
+export interface BrandOption {
+  brand: string
+  count: number
+}
+
+export interface ModelOption {
+  model_name: string
+  category: string | null
 }
 
 // Form types

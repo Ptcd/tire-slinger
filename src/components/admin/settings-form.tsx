@@ -194,6 +194,53 @@ export function SettingsForm({ organization }: SettingsFormProps) {
 
         <Separator />
 
+        {/* Inventory Entry Settings */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Inventory Entry Settings</h2>
+          <FormField
+            control={form.control}
+            name="allow_custom_brand"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Allow Custom Brand Entry</FormLabel>
+                  <FormDescription>
+                    When enabled, workers can type a custom brand name if not found in the database
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value ?? true}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="require_model_selection"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mt-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Require Model Selection</FormLabel>
+                  <FormDescription>
+                    When enabled, workers must select a specific tire model (not just brand)
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value ?? false}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <Separator />
+
         {/* DOT Tracking Settings */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Tire Aging (DOT)</h2>
