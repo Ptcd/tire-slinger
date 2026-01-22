@@ -252,6 +252,7 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
       is_flotation: sizeFormat === 'flotation',
       flotation_diameter: sizeFormat === 'flotation' ? parseFloat(flotationDiameter) : null,
       flotation_width: sizeFormat === 'flotation' ? parseFloat(flotationWidth) : null,
+      flotation_rim: sizeFormat === 'flotation' ? data.rim_diameter : null,
     }
 
     if (tire) {

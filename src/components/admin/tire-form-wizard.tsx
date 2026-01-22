@@ -218,6 +218,7 @@ export function TireFormWizard() {
         is_flotation: sizeFormat === 'flotation',
         flotation_diameter: sizeFormat === 'flotation' ? parseFloat(flotationDiameter) : null,
         flotation_width: sizeFormat === 'flotation' ? parseFloat(flotationWidth) : null,
+        flotation_rim: sizeFormat === 'flotation' ? rimDiameter : null,
       }
       
       const { error } = await supabase.from('tires').insert(tireData)
