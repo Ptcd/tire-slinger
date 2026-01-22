@@ -2,10 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Package, Camera, ClipboardList, Menu, Inbox } from 'lucide-react'
+import { Home, Package, Plus, Camera, ClipboardList, Menu, Inbox } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/hooks/use-user'
 import imageCompression from 'browser-image-compression'
@@ -20,7 +19,7 @@ import {
 const navItems = [
   { href: '/admin', icon: Home, label: 'Home' },
   { href: '/admin/inventory', icon: Package, label: 'Inventory' },
-  { href: '/admin/inventory/new', icon: Camera, label: 'Add', isMain: true },
+  { href: '/admin/inventory/new', icon: Plus, label: 'Add', isMain: true },
   { href: '/admin/requests', icon: Inbox, label: 'Requests', hasBadge: true },
   { href: '/admin/marketplace/tasks', icon: ClipboardList, label: 'Tasks' },
 ]
@@ -32,12 +31,12 @@ const moreItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
-  const router = useRouter()
   const [moreOpen, setMoreOpen] = useState(false)
   const { organization } = useUser()
   const [newRequestCount, setNewRequestCount] = useState(0)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const isOnNewTirePage = pathname === '/admin/inventory/new'
 
   useEffect(() => {
     if (!organization) return
@@ -82,46 +81,46 @@ export function BottomNav() {
 
     setUploading(true)
     const supabase = createClient()
-    const uploadedUrls: string[] = []
 
     try {
-      for (const file of Array.from(files)) {
-        // Compress image
-        const options = {
-          maxSizeMB: 1,
-          maxWidthOrHeight: 1200,
-          useWebWorker: true,
-        }
-        const compressedFile = await imageCompression(file, options)
-
-        // Generate unique filename
-        const fileExt = file.name.split('.').pop() || 'jpg'
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-        const filePath = `${organization.id}/${fileName}`
-
-        // Upload to Supabase Storage
-        const { error } = await supabase.storage
-          .from('tire-images')
-          .upload(filePath, compressedFile)
-
-        if (error) throw error
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('tire-images')
-          .getPublicUrl(filePath)
-
-        uploadedUrls.push(urlData.publicUrl)
-      }
-
-      // Store URLs in sessionStorage
-      sessionStorage.setItem('pendingTireImages', JSON.stringify(uploadedUrls))
+      const file = files[0]
       
-      // Navigate to form
-      router.push('/admin/inventory/new?fromCamera=true')
+      // Compress image
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      }
+      const compressedFile = await imageCompression(file, options)
+
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop() || 'jpg'
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+      const filePath = `${organization.id}/${fileName}`
+
+      // Upload to Supabase Storage
+      const { error } = await supabase.storage
+        .from('tire-images')
+        .upload(filePath, compressedFile)
+
+      if (error) throw error
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('tire-images')
+        .getPublicUrl(filePath)
+
+      // Get existing images and append new one
+      const existingRaw = sessionStorage.getItem('currentTireImages')
+      const existing = existingRaw ? JSON.parse(existingRaw) : []
+      const updated = [...existing, urlData.publicUrl]
+      sessionStorage.setItem('currentTireImages', JSON.stringify(updated))
+      
+      // Notify form to update
+      window.dispatchEvent(new CustomEvent('tireImageAdded'))
     } catch (error) {
-      console.error('Error uploading images:', error)
-      alert('Failed to upload images. Please try again.')
+      console.error('Error uploading image:', error)
+      alert('Failed to upload image. Please try again.')
     } finally {
       setUploading(false)
       if (cameraInputRef.current) {
@@ -138,29 +137,39 @@ export function BottomNav() {
           const Icon = item.icon
           
           if (item.isMain) {
+            if (isOnNewTirePage) {
+              return (
+                <div key={item.href} className="relative">
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleCameraCapture}
+                  />
+                  <button
+                    onClick={() => cameraInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center justify-center w-14 h-14 -mt-4 bg-yellow-500 rounded-full shadow-lg disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <div className="w-7 h-7 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Camera className="w-7 h-7 text-slate-900" />
+                    )}
+                  </button>
+                </div>
+              )
+            }
             return (
-              <div key={item.href} className="relative">
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  multiple
-                  className="hidden"
-                  onChange={handleCameraCapture}
-                />
-                <button
-                  onClick={() => cameraInputRef.current?.click()}
-                  disabled={uploading}
-                  className="flex items-center justify-center w-14 h-14 -mt-4 bg-yellow-500 rounded-full shadow-lg disabled:opacity-50"
-                >
-                  {uploading ? (
-                    <div className="w-7 h-7 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Icon className="w-7 h-7 text-slate-900" />
-                  )}
-                </button>
-              </div>
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center justify-center w-14 h-14 -mt-4 bg-yellow-500 rounded-full shadow-lg"
+              >
+                <Plus className="w-7 h-7 text-slate-900" />
+              </Link>
             )
           }
           

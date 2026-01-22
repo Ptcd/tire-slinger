@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/hooks/use-user'
 import { useAutosave } from '@/hooks/use-autosave'
@@ -39,7 +39,6 @@ interface TireFormProps {
 
 export function TireForm({ tire, onSuccess }: TireFormProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { organization } = useUser()
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -208,23 +207,38 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
     2000
   )
 
-  // Load pre-captured images from camera
+  // Sync images with sessionStorage for camera button integration
   useEffect(() => {
-    if (searchParams.get('fromCamera') === 'true') {
-      const stored = sessionStorage.getItem('pendingTireImages')
+    const currentImages = form.getValues('images') || []
+    sessionStorage.setItem('currentTireImages', JSON.stringify(currentImages))
+    
+    const handleImageAdded = () => {
+      const stored = sessionStorage.getItem('currentTireImages')
       if (stored) {
         try {
           const urls = JSON.parse(stored) as string[]
-          if (urls.length > 0) {
-            form.setValue('images', urls)
-          }
+          form.setValue('images', urls)
         } catch (e) {
-          console.error('Failed to parse pending images:', e)
+          console.error('Failed to parse images:', e)
         }
-        sessionStorage.removeItem('pendingTireImages')
       }
     }
-  }, [searchParams, form])
+    
+    window.addEventListener('tireImageAdded', handleImageAdded)
+    
+    return () => {
+      window.removeEventListener('tireImageAdded', handleImageAdded)
+      sessionStorage.removeItem('currentTireImages')
+    }
+  }, [form])
+
+  // Keep sessionStorage in sync when images change via upload button
+  const watchedImages = form.watch('images')
+  useEffect(() => {
+    if (watchedImages) {
+      sessionStorage.setItem('currentTireImages', JSON.stringify(watchedImages))
+    }
+  }, [watchedImages])
 
   const saveTire = async (data: TireFormData, isDraft: boolean = false) => {
     if (!organization) return
