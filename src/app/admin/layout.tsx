@@ -1,20 +1,38 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/admin/sidebar'
 import { Header } from '@/components/admin/header'
+import { BottomNav } from '@/components/admin/bottom-nav'
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="min-h-screen bg-background">
+      {/* Desktop sidebar - hidden on mobile */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+      
+      {/* Main content */}
+      <div className="md:pl-64">
         <Header />
-        <main className="flex-1 overflow-y-auto bg-background p-6">
+        <main className="p-4 md:p-6 pb-24 md:pb-6">
           {children}
         </main>
       </div>
+      
+      {/* Mobile bottom nav - hidden on desktop */}
+      <BottomNav />
     </div>
   )
 }

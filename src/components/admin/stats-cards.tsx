@@ -57,14 +57,14 @@ export function StatsCards() {
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Loading...</CardTitle>
+              <CardTitle className="text-xs md:text-sm font-medium">Loading...</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">-</div>
+              <div className="text-xl md:text-2xl font-bold">-</div>
             </CardContent>
           </Card>
         ))}
@@ -73,45 +73,45 @@ export function StatsCards() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Tires</CardTitle>
-          <Package className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-xs md:text-sm font-medium">Total Tires</CardTitle>
+          <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.totalTires}</div>
-          <p className="text-xs text-muted-foreground">Active listings</p>
+          <div className="text-xl md:text-2xl font-bold">{stats.totalTires}</div>
+          <p className="text-xs text-muted-foreground hidden md:block">Active listings</p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Quantity</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-xs md:text-sm font-medium">Total Quantity</CardTitle>
+          <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.totalQuantity}</div>
-          <p className="text-xs text-muted-foreground">Tires in stock</p>
+          <div className="text-xl md:text-2xl font-bold">{stats.totalQuantity}</div>
+          <p className="text-xs text-muted-foreground hidden md:block">Tires in stock</p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-xs md:text-sm font-medium">Low Stock</CardTitle>
+          <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.lowStock}</div>
-          <p className="text-xs text-muted-foreground">Need restocking</p>
+          <div className="text-xl md:text-2xl font-bold">{stats.lowStock}</div>
+          <p className="text-xs text-muted-foreground hidden md:block">Need restocking</p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
-          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-xs md:text-sm font-medium">Active Listings</CardTitle>
+          <ShoppingBag className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.activeListings}</div>
-          <p className="text-xs text-muted-foreground">Marketplace posts</p>
+          <div className="text-xl md:text-2xl font-bold">{stats.activeListings}</div>
+          <p className="text-xs text-muted-foreground hidden md:block">Marketplace posts</p>
         </CardContent>
       </Card>
     </div>
