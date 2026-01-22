@@ -1,56 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Yellow background with rounded corners -->
-  <rect width="512" height="512" rx="80" fill="#FFD700"/>
+  <!-- Dark background with rounded corners -->
+  <rect width="512" height="512" rx="80" fill="#1a1a1a"/>
   
-  <!-- Motion/speed lines behind tire -->
-  <g opacity="0.25">
-    <path d="M 80 256 L 140 256" stroke="#FFA500" stroke-width="14" stroke-linecap="round" fill="none"/>
-    <path d="M 80 220 L 150 220" stroke="#FFA500" stroke-width="12" stroke-linecap="round" fill="none"/>
-    <path d="M 80 292 L 150 292" stroke="#FFA500" stroke-width="12" stroke-linecap="round" fill="none"/>
-  </g>
+  <!-- Yellow outer circle (stroke only, matching Lucide CircleDot) -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#facc15" stroke-width="24"/>
   
-  <!-- Tire side view - main body (oval shape) -->
-  <ellipse cx="256" cy="256" rx="160" ry="100" fill="#1a1a1a" stroke="#0a0a0a" stroke-width="6"/>
-  
-  <!-- Tire inner rim -->
-  <ellipse cx="256" cy="256" rx="120" ry="75" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="4"/>
-  
-  <!-- Tread pattern on outer edge - side view -->
-  <g stroke="#3a3a3a" stroke-width="5" fill="none" stroke-linecap="round">
-    <!-- Horizontal tread grooves across the tire -->
-    <line x1="120" y1="180" x2="392" y2="180"/>
-    <line x1="120" y1="200" x2="392" y2="200"/>
-    <line x1="120" y1="220" x2="392" y2="220"/>
-    <line x1="120" y1="240" x2="392" y2="240"/>
-    <line x1="120" y1="260" x2="392" y2="260"/>
-    <line x1="120" y1="280" x2="392" y2="280"/>
-    <line x1="120" y1="300" x2="392" y2="300"/>
-    <line x1="120" y1="320" x2="392" y2="320"/>
-    <line x1="120" y1="340" x2="392" y2="340"/>
-    
-    <!-- Vertical tread pattern for depth -->
-    <line x1="180" y1="160" x2="180" y2="352"/>
-    <line x1="256" y1="160" x2="256" y2="352"/>
-    <line x1="332" y1="160" x2="332" y2="352"/>
-  </g>
-  
-  <!-- Hub cap center - more defined -->
-  <ellipse cx="256" cy="256" rx="60" ry="38" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="3"/>
-  <ellipse cx="256" cy="256" rx="40" ry="25" fill="#4a4a4a"/>
-  
-  <!-- Lug nuts/spokes for wheel detail -->
-  <g stroke="#5a5a5a" stroke-width="4" fill="none">
-    <!-- Vertical and horizontal spokes -->
-    <line x1="256" y1="218" x2="256" y2="294"/>
-    <line x1="226" y1="256" x2="286" y2="256"/>
-    <!-- Diagonal spokes -->
-    <line x1="236" y1="236" x2="276" y2="276"/>
-    <line x1="276" y1="236" x2="236" y2="276"/>
-  </g>
-  
-  <!-- Small lug nut details -->
-  <circle cx="256" cy="218" r="6" fill="#5a5a5a"/>
-  <circle cx="256" cy="294" r="6" fill="#5a5a5a"/>
-  <circle cx="226" cy="256" r="6" fill="#5a5a5a"/>
-  <circle cx="286" cy="256" r="6" fill="#5a5a5a"/>
+  <!-- Yellow center dot -->
+  <circle cx="256" cy="256" r="40" fill="#facc15"/>
 </svg>
