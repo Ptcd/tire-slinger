@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/hooks/use-user'
 import { useAutosave } from '@/hooks/use-autosave'
@@ -39,6 +39,7 @@ interface TireFormProps {
 
 export function TireForm({ tire, onSuccess }: TireFormProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { organization } = useUser()
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -206,6 +207,24 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
     },
     2000
   )
+
+  // Load pre-captured images from camera
+  useEffect(() => {
+    if (searchParams.get('fromCamera') === 'true') {
+      const stored = sessionStorage.getItem('pendingTireImages')
+      if (stored) {
+        try {
+          const urls = JSON.parse(stored) as string[]
+          if (urls.length > 0) {
+            form.setValue('images', urls)
+          }
+        } catch (e) {
+          console.error('Failed to parse pending images:', e)
+        }
+        sessionStorage.removeItem('pendingTireImages')
+      }
+    }
+  }, [searchParams, form])
 
   const saveTire = async (data: TireFormData, isDraft: boolean = false) => {
     if (!organization) return

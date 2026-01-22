@@ -2,11 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Package, Plus, ClipboardList, Menu, Inbox } from 'lucide-react'
+import { Home, Package, Camera, ClipboardList, Menu, Inbox } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/hooks/use-user'
+import imageCompression from 'browser-image-compression'
 import {
   Sheet,
   SheetContent,
@@ -18,7 +20,7 @@ import {
 const navItems = [
   { href: '/admin', icon: Home, label: 'Home' },
   { href: '/admin/inventory', icon: Package, label: 'Inventory' },
-  { href: '/admin/inventory/new', icon: Plus, label: 'Add', isMain: true },
+  { href: '/admin/inventory/new', icon: Camera, label: 'Add', isMain: true },
   { href: '/admin/requests', icon: Inbox, label: 'Requests', hasBadge: true },
   { href: '/admin/marketplace/tasks', icon: ClipboardList, label: 'Tasks' },
 ]
@@ -30,9 +32,12 @@ const moreItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const [moreOpen, setMoreOpen] = useState(false)
   const { organization } = useUser()
   const [newRequestCount, setNewRequestCount] = useState(0)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (!organization) return
@@ -71,6 +76,60 @@ export function BottomNav() {
     }
   }, [organization])
 
+  const handleCameraCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0 || !organization) return
+
+    setUploading(true)
+    const supabase = createClient()
+    const uploadedUrls: string[] = []
+
+    try {
+      for (const file of Array.from(files)) {
+        // Compress image
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+        }
+        const compressedFile = await imageCompression(file, options)
+
+        // Generate unique filename
+        const fileExt = file.name.split('.').pop() || 'jpg'
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+        const filePath = `${organization.id}/${fileName}`
+
+        // Upload to Supabase Storage
+        const { error } = await supabase.storage
+          .from('tire-images')
+          .upload(filePath, compressedFile)
+
+        if (error) throw error
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('tire-images')
+          .getPublicUrl(filePath)
+
+        uploadedUrls.push(urlData.publicUrl)
+      }
+
+      // Store URLs in sessionStorage
+      sessionStorage.setItem('pendingTireImages', JSON.stringify(uploadedUrls))
+      
+      // Navigate to form
+      router.push('/admin/inventory/new?fromCamera=true')
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      alert('Failed to upload images. Please try again.')
+    } finally {
+      setUploading(false)
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = ''
+      }
+    }
+  }
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-700 md:hidden">
       <div className="flex items-center justify-around h-16">
@@ -80,13 +139,28 @@ export function BottomNav() {
           
           if (item.isMain) {
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center justify-center w-14 h-14 -mt-4 bg-yellow-500 rounded-full shadow-lg"
-              >
-                <Icon className="w-7 h-7 text-slate-900" />
-              </Link>
+              <div key={item.href} className="relative">
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  multiple
+                  className="hidden"
+                  onChange={handleCameraCapture}
+                />
+                <button
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex items-center justify-center w-14 h-14 -mt-4 bg-yellow-500 rounded-full shadow-lg disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <div className="w-7 h-7 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Icon className="w-7 h-7 text-slate-900" />
+                  )}
+                </button>
+              </div>
             )
           }
           
