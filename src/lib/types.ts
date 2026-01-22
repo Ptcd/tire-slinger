@@ -47,6 +47,8 @@ export interface Tire {
   dot_year: number | null
   price: number
   quantity: number
+  sale_type: 'individual' | 'pair' | 'set'
+  set_price: number | null
   images: string[]
   description: string | null
   is_active: boolean
@@ -162,6 +164,8 @@ export interface TireFormData {
   dot_year: number | null
   price: number
   quantity: number
+  sale_type: 'individual' | 'pair' | 'set'
+  set_price: number | null
   description: string
   images: string[]
 }

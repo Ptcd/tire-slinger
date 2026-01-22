@@ -59,3 +59,9 @@ export const FLOTATION_WIDTHS = [
   9.50, 10.50, 11.50, 12.50, 13.50, 14.50, 15.50
 ] as const
 
+export const SALE_TYPES = [
+  { value: 'individual', label: 'Individual (sell one at a time)' },
+  { value: 'pair', label: 'Pair (sell as 2)' },
+  { value: 'set', label: 'Set of 4' },
+] as const
+

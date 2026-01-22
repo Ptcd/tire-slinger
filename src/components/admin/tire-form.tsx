@@ -28,7 +28,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { TIRE_TYPES, TIRE_CONDITIONS, COMMON_WIDTHS, COMMON_ASPECT_RATIOS, COMMON_RIM_DIAMETERS } from '@/lib/constants'
+import { TIRE_TYPES, TIRE_CONDITIONS, COMMON_WIDTHS, COMMON_ASPECT_RATIOS, COMMON_RIM_DIAMETERS, SALE_TYPES } from '@/lib/constants'
 import type { Tire, TireFormData, BrandOption, ModelOption } from '@/lib/types'
 
 interface TireFormProps {
@@ -76,6 +76,8 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
       dot_year: tire.dot_year,
       price: tire.price,
       quantity: tire.quantity,
+      sale_type: tire.sale_type || 'individual',
+      set_price: tire.set_price,
       description: tire.description || '',
       images: tire.images || [],
     } : {
@@ -91,6 +93,8 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
       dot_year: null,
       price: 0,
       quantity: 1,
+      sale_type: 'individual',
+      set_price: null,
       description: '',
       images: [],
     },
@@ -202,7 +206,7 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
     2000
   )
 
-  const saveTire = async (data: TireFormData) => {
+  const saveTire = async (data: TireFormData, isDraft: boolean = false) => {
     if (!organization) return
 
     const supabase = createClient()
@@ -246,8 +250,11 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
       dot_year: data.dot_year,
       price: data.price,
       quantity: data.quantity,
+      sale_type: data.sale_type,
+      set_price: data.set_price,
       description: data.description || null,
       images: data.images,
+      is_active: !isDraft,
       is_lt: isLt,
       is_flotation: sizeFormat === 'flotation',
       flotation_diameter: sizeFormat === 'flotation' ? parseFloat(flotationDiameter) : null,
@@ -824,6 +831,64 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
           />
         </div>
 
+        {/* Sale Type */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="sale_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sale Type</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="How to sell" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {SALE_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Individual: price per tire. Pair/Set: use Set Price below.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          {form.watch('sale_type') !== 'individual' && (
+            <FormField
+              control={form.control}
+              name="set_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {form.watch('sale_type') === 'pair' ? 'Pair Price' : 'Set Price (4 tires)'}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Price for the pair/set"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Total price when sold as a {form.watch('sale_type')}.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </div>
+
         {/* Description */}
         <FormField
           control={form.control}
@@ -863,7 +928,7 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
         />
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-4">
+        <div className="flex justify-end gap-3">
           <Button
             type="button"
             variant="outline"
@@ -871,6 +936,28 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
           >
             Cancel
           </Button>
+          {!tire && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true)
+                try {
+                  await saveTire(form.getValues(), true)
+                  router.push('/admin/inventory?filter=drafts')
+                  router.refresh()
+                } catch (error) {
+                  console.error('Error saving draft:', error)
+                  alert('Failed to save draft')
+                } finally {
+                  setSaving(false)
+                }
+              }}
+            >
+              Save as Draft
+            </Button>
+          )}
           <Button type="submit" disabled={saving}>
             {saving ? 'Saving...' : tire ? 'Update Tire' : 'Create Tire'}
           </Button>

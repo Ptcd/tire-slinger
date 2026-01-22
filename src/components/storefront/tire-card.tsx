@@ -46,7 +46,19 @@ export function TireCard({ tire, organization, yardSlug }: TireCardProps) {
             <Badge variant="secondary">{tire.tread_depth}/32"</Badge>
           )}
         </div>
-        <p className="text-2xl font-black text-primary mb-1">{formatPrice(tire.price)}</p>
+        {tire.sale_type === 'individual' ? (
+          <p className="text-2xl font-black text-primary mb-1">{formatPrice(tire.price)} each</p>
+        ) : (
+          <div className="mb-1">
+            <p className="text-2xl font-black text-primary">
+              {formatPrice(tire.set_price || tire.price * (tire.sale_type === 'pair' ? 2 : 4))} 
+              {tire.sale_type === 'pair' ? ' / pair' : ' / set of 4'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              ({formatPrice(tire.price)} each if sold individually)
+            </p>
+          </div>
+        )}
         <p className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">{tire.quantity}</span> available
         </p>
