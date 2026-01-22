@@ -54,6 +54,10 @@ export function TireFormWizard() {
   const [quantity, setQuantity] = useState(1)
   const [showCustomBrand, setShowCustomBrand] = useState(false)
   const [customBrand, setCustomBrand] = useState('')
+  const [dotWeek, setDotWeek] = useState('')
+  const [dotYear, setDotYear] = useState('')
+  const [saleType, setSaleType] = useState<'individual' | 'pair' | 'set'>('individual')
+  const [bundlePrice, setBundlePrice] = useState('')
   
   // Brand/model fetching
   const [availableBrands, setAvailableBrands] = useState<BrandOption[]>([])
@@ -155,12 +159,30 @@ export function TireFormWizard() {
   
   const canGoNext = () => {
     switch (currentStep) {
-      case 1: return true // Photos optional
-      case 2: return sizeFormat === 'standard' ? (width && aspectRatio && rimDiameter) : (flotationDiameter && flotationWidth && rimDiameter)
-      case 3: return !!brand || showCustomBrand // Brand required, model optional
-      case 4: return true // All have defaults
-      case 5: return true // Price can be 0 for drafts
-      default: return false
+      case 1: 
+        // Check if images required
+        if (organization?.require_images && images.length === 0) {
+          return false
+        }
+        return true
+      case 2: 
+        return sizeFormat === 'standard' 
+          ? (width && aspectRatio && rimDiameter) 
+          : (flotationDiameter && flotationWidth && rimDiameter)
+      case 3: 
+        // Brand required, model depends on org setting
+        if (!brand && !showCustomBrand) return false
+        if (organization?.require_model_selection && !model && model !== '__skip__') return false
+        return true
+      case 4: 
+        // Check tread depth and DOT requirements
+        if (organization?.require_tread_depth && !treadDepth) return false
+        if (organization?.require_dot && (!dotWeek || !dotYear)) return false
+        return true
+      case 5: 
+        return true // Price can be 0 for drafts
+      default: 
+        return false
     }
   }
   
@@ -191,35 +213,30 @@ export function TireFormWizard() {
         sizeDisplay = isLt ? `LT ${width}/${aspectRatio}R${rimDiameter}` : `${width}/${aspectRatio}R${rimDiameter}`
       }
       
-      // Calculate diameter_inches
-      let diameterInches = 0
-      if (sizeFormat === 'flotation') {
-        diameterInches = parseFloat(flotationDiameter) || 0
-      } else {
-        diameterInches = rimDiameter + 2 * (width * aspectRatio / 100) / 25.4
-      }
-      
       const tireData = {
         org_id: organization.id,
         width: sizeFormat === 'standard' ? width : 0,
         aspect_ratio: sizeFormat === 'standard' ? aspectRatio : 0,
         rim_diameter: rimDiameter,
         size_display: sizeDisplay,
-        diameter_inches: diameterInches,
         brand: (showCustomBrand ? customBrand : brand) || null,
-        model: model || null,
+        model: model === '__skip__' ? null : (model || null),
         tire_type: tireType,
         condition: condition,
         tread_depth: treadDepth ? parseInt(treadDepth) : null,
+        dot_week: dotWeek ? parseInt(dotWeek) : null,
+        dot_year: dotYear ? parseInt(dotYear) : null,
         price: price ? parseFloat(price) : 0,
         quantity: quantity,
+        sale_type: saleType,
+        set_price: bundlePrice ? parseFloat(bundlePrice) : null,
         images: images,
         is_active: publish,
+        status: publish ? 'published' : 'draft',
         is_lt: isLt,
         is_flotation: sizeFormat === 'flotation',
         flotation_diameter: sizeFormat === 'flotation' ? parseFloat(flotationDiameter) : null,
         flotation_width: sizeFormat === 'flotation' ? parseFloat(flotationWidth) : null,
-        flotation_rim: sizeFormat === 'flotation' ? rimDiameter : null,
       }
       
       const { data: newTire, error } = await supabase
@@ -261,6 +278,10 @@ export function TireFormWizard() {
     setShowCustomBrand(false)
     setPrice('')
     setQuantity(1)
+    setDotWeek('')
+    setDotYear('')
+    setSaleType('individual')
+    setBundlePrice('')
     setCurrentStep(1)
     setShowSuccess(false)
   }
@@ -594,7 +615,7 @@ export function TireFormWizard() {
               </div>
             </div>
             <div>
-              <Label>Tread Depth (optional)</Label>
+              <Label>Tread Depth {!organization?.require_tread_depth && <span className="text-muted-foreground">(optional)</span>}</Label>
               <Input
                 type="number"
                 min="1"
@@ -606,6 +627,42 @@ export function TireFormWizard() {
               />
               <p className="text-xs text-muted-foreground mt-1">32nds of an inch (1-12)</p>
             </div>
+            
+            {/* DOT Date Code - only show if org has DOT tracking enabled */}
+            {organization?.dot_tracking_enabled && (
+              <div className="space-y-3 pt-4 border-t">
+                <Label>DOT Date Code {!organization?.require_dot && <span className="text-muted-foreground">(optional)</span>}</Label>
+                <p className="text-xs text-muted-foreground">
+                  The 4-digit code on the tire sidewall (e.g., 2419 = week 24, year 2019)
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Week (01-52)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="52"
+                      value={dotWeek}
+                      onChange={(e) => setDotWeek(e.target.value)}
+                      placeholder="24"
+                      className="h-14 text-lg"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Year (2-digit)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="99"
+                      value={dotYear}
+                      onChange={(e) => setDotYear(e.target.value)}
+                      placeholder="19"
+                      className="h-14 text-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
         
@@ -655,6 +712,59 @@ export function TireFormWizard() {
                 </Button>
               </div>
             </div>
+            
+            {/* Sale Type */}
+            <div className="pt-4 border-t">
+              <Label>Selling As</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                <Button
+                  type="button"
+                  variant={saleType === 'individual' ? 'default' : 'outline'}
+                  onClick={() => setSaleType('individual')}
+                  className={saleType === 'individual' ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                >
+                  Single
+                </Button>
+                <Button
+                  type="button"
+                  variant={saleType === 'pair' ? 'default' : 'outline'}
+                  onClick={() => setSaleType('pair')}
+                  className={saleType === 'pair' ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                >
+                  Pair
+                </Button>
+                <Button
+                  type="button"
+                  variant={saleType === 'set' ? 'default' : 'outline'}
+                  onClick={() => setSaleType('set')}
+                  className={saleType === 'set' ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                >
+                  Set of 4
+                </Button>
+              </div>
+            </div>
+
+            {/* Set/Pair Price - only show if not individual */}
+            {saleType !== 'individual' && (
+              <div>
+                <Label>{saleType === 'pair' ? 'Pair Price' : 'Set Price'}</Label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={bundlePrice}
+                    onChange={(e) => setBundlePrice(e.target.value)}
+                    placeholder="0.00"
+                    className="h-14 text-lg pl-8"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Price for the {saleType === 'pair' ? 'pair (2 tires)' : 'full set (4 tires)'}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
