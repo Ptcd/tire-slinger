@@ -114,38 +114,42 @@ export function TireFormWizard() {
       return
     }
     
-    setLoadingModels(true)
-    
-    const params = new URLSearchParams()
-    params.set('brand', brand)
-    
-    if (sizeFormat === 'flotation') {
-      params.set('is_flotation', 'true')
-      params.set('flotation_diameter', flotationDiameter)
-      params.set('flotation_width', flotationWidth)
-      params.set('flotation_rim', rimDiameter.toString())
-    } else {
-      params.set('width', width.toString())
-      params.set('aspect_ratio', aspectRatio.toString())
-      params.set('rim_diameter', rimDiameter.toString())
-    }
-    if (isLt) params.set('is_lt', 'true')
-    
-    try {
-      const res = await fetch(`/api/tire-catalog/models?${params}`)
-      const data = await res.json()
-      setAvailableModels(data.models || [])
+    async function fetchModels() {
+      setLoadingModels(true)
       
-      // Auto-select if only one model
-      if (data.models?.length === 1) {
-        setModel(data.models[0].model_name)
+      const params = new URLSearchParams()
+      params.set('brand', brand)
+      
+      if (sizeFormat === 'flotation') {
+        params.set('is_flotation', 'true')
+        params.set('flotation_diameter', flotationDiameter)
+        params.set('flotation_width', flotationWidth)
+        params.set('flotation_rim', rimDiameter.toString())
+      } else {
+        params.set('width', width.toString())
+        params.set('aspect_ratio', aspectRatio.toString())
+        params.set('rim_diameter', rimDiameter.toString())
       }
-    } catch (err) {
-      console.error('Error fetching models:', err)
-      setAvailableModels([])
-    } finally {
-      setLoadingModels(false)
+      if (isLt) params.set('is_lt', 'true')
+      
+      try {
+        const res = await fetch(`/api/tire-catalog/models?${params}`)
+        const data = await res.json()
+        setAvailableModels(data.models || [])
+        
+        // Auto-select if only one model
+        if (data.models?.length === 1) {
+          setModel(data.models[0].model_name)
+        }
+      } catch (err) {
+        console.error('Error fetching models:', err)
+        setAvailableModels([])
+      } finally {
+        setLoadingModels(false)
+      }
     }
+    
+    fetchModels()
   }, [brand, width, aspectRatio, rimDiameter, flotationDiameter, flotationWidth, isLt, sizeFormat, showCustomBrand, currentStep])
   
   const canGoNext = () => {
