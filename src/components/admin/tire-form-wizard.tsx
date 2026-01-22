@@ -32,6 +32,9 @@ export function TireFormWizard() {
   const router = useRouter()
   const { organization } = useUser()
   const [currentStep, setCurrentStep] = useState(1)
+  
+  // Debug logging
+  console.log('[TireWizard] Render - currentStep:', currentStep, 'org:', organization?.slug)
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   
@@ -62,16 +65,20 @@ export function TireFormWizard() {
   
   // Fetch brands when size changes (step 2 -> step 3)
   useEffect(() => {
+    console.log('[TireWizard] Brand useEffect triggered, currentStep:', currentStep)
     if (currentStep < 3) return
     
     async function fetchBrands() {
+      console.log('[TireWizard] fetchBrands called, sizeFormat:', sizeFormat)
       if (sizeFormat === 'standard') {
         if (!width || !aspectRatio || !rimDiameter) {
+          console.log('[TireWizard] Missing standard size values')
           setAvailableBrands([])
           return
         }
       } else {
         if (!flotationDiameter || !flotationWidth || !rimDiameter) {
+          console.log('[TireWizard] Missing flotation size values')
           setAvailableBrands([])
           return
         }
@@ -92,12 +99,17 @@ export function TireFormWizard() {
       }
       if (isLt) params.set('is_lt', 'true')
       
+      const url = `/api/tire-catalog/brands?${params}`
+      console.log('[TireWizard] Fetching brands from:', url)
+      
       try {
-        const res = await fetch(`/api/tire-catalog/brands?${params}`)
+        const res = await fetch(url)
+        console.log('[TireWizard] Brands response status:', res.status)
         const data = await res.json()
+        console.log('[TireWizard] Brands data:', data)
         setAvailableBrands(data.brands || [])
       } catch (err) {
-        console.error('Error fetching brands:', err)
+        console.error('[TireWizard] Error fetching brands:', err)
         setAvailableBrands([])
       } finally {
         setLoadingBrands(false)
@@ -461,6 +473,7 @@ export function TireFormWizard() {
         
         {currentStep === 3 && (
           <div className="space-y-4">
+            {console.log('[TireWizard] Rendering Step 3, loadingBrands:', loadingBrands, 'availableBrands:', availableBrands?.length)}
             <div>
               <Label>Brand</Label>
               {showCustomBrand ? (
