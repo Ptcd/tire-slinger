@@ -1,0 +1,17 @@
+{
+  "name": "tire-slingers-icons",
+  "version": "1.0.0",
+  "description": "PWA icons for Tire Slingers",
+  "scripts": {
+    "build": "next build",
+    "generate-icons": "node generate-icons.js"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.0"
+  }
+}
