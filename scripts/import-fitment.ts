@@ -165,23 +165,43 @@ async function main() {
   
   console.log(`✓ Completed: ${insertedVehicles} vehicles inserted`)
   
-  // Get vehicle IDs
+  // Get vehicle IDs (paginate to get all records)
   console.log('\n=== Step 2: Fetching vehicle IDs ===')
-  const { data: vehicleData, error: fetchError } = await supabase
-    .from('fitment_vehicles')
-    .select('id, year, make, model, trim')
-  
-  if (fetchError) {
-    console.error('Error fetching vehicle IDs:', fetchError)
-    process.exit(1)
-  }
-  
-  console.log(`Fetched ${vehicleData?.length || 0} vehicle records`)
-  
   const vehicleIdMap = new Map<string, string>()
-  for (const v of vehicleData || []) {
-    vehicleIdMap.set(`${v.year}|${v.make}|${v.model}|${v.trim || ''}`, v.id)
+  let offset = 0
+  const pageSize = 1000
+  let totalFetched = 0
+  
+  while (true) {
+    const { data: vehicleData, error: fetchError } = await supabase
+      .from('fitment_vehicles')
+      .select('id, year, make, model, trim')
+      .range(offset, offset + pageSize - 1)
+    
+    if (fetchError) {
+      console.error('Error fetching vehicle IDs:', fetchError)
+      process.exit(1)
+    }
+    
+    if (!vehicleData || vehicleData.length === 0) {
+      break
+    }
+    
+    for (const v of vehicleData) {
+      vehicleIdMap.set(`${v.year}|${v.make}|${v.model}|${v.trim || ''}`, v.id)
+    }
+    
+    totalFetched += vehicleData.length
+    console.log(`  Fetched ${totalFetched} vehicle records...`)
+    
+    if (vehicleData.length < pageSize) {
+      break
+    }
+    
+    offset += pageSize
   }
+  
+  console.log(`✓ Fetched ${totalFetched} total vehicle records`)
   
   // Build tire size entries
   console.log('\n=== Step 3: Building tire size entries ===')
