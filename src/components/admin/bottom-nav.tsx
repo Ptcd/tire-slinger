@@ -150,7 +150,7 @@ export function BottomNav() {
                   />
                   <button
                     onClick={() => cameraInputRef.current?.click()}
-                    disabled={uploading}
+                    disabled={uploading || !organization}
                     className="flex items-center justify-center w-14 h-14 -mt-4 bg-yellow-500 rounded-full shadow-lg disabled:opacity-50"
                   >
                     {uploading ? (

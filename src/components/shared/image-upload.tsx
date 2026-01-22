@@ -112,12 +112,13 @@ export function ImageUpload({ orgId, currentImages, onImagesChange }: ImageUploa
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           variant="outline"
           onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
+          disabled={uploading || !orgId}
+          className="flex-1 sm:flex-none"
         >
           <Upload className="mr-2 h-4 w-4" />
           {uploading ? 'Uploading...' : 'Upload Images'}
@@ -132,7 +133,7 @@ export function ImageUpload({ orgId, currentImages, onImagesChange }: ImageUploa
         />
       </div>
       {currentImages.length > 0 && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
           {currentImages.map((url, index) => (
             <div key={index} className="relative group">
               <img
@@ -144,7 +145,7 @@ export function ImageUpload({ orgId, currentImages, onImagesChange }: ImageUploa
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 h-6 w-6 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 onClick={() => handleRemove(url)}
               >
                 <X className="h-4 w-4" />

@@ -38,6 +38,44 @@ export function TireFormWizard() {
   
   // Form state
   const [images, setImages] = useState<string[]>([])
+
+  // Sync images with sessionStorage for camera button integration
+  useEffect(() => {
+    // Initialize sessionStorage with current images
+    sessionStorage.setItem('currentTireImages', JSON.stringify(images))
+    
+    // Listen for new images from camera button in bottom nav
+    const handleImageAdded = () => {
+      const stored = sessionStorage.getItem('currentTireImages')
+      if (stored) {
+        try {
+          const urls = JSON.parse(stored) as string[]
+          setImages(urls)
+        } catch (e) {
+          console.error('Failed to parse images:', e)
+        }
+      }
+    }
+    
+    window.addEventListener('tireImageAdded', handleImageAdded)
+    
+    return () => {
+      window.removeEventListener('tireImageAdded', handleImageAdded)
+    }
+  }, []) // Empty deps - only set up listener once
+
+  // Keep sessionStorage in sync when images change (from ImageUpload or camera)
+  useEffect(() => {
+    sessionStorage.setItem('currentTireImages', JSON.stringify(images))
+  }, [images])
+
+  // Clean up sessionStorage when component unmounts
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem('currentTireImages')
+    }
+  }, [])
+
   const [sizeFormat, setSizeFormat] = useState<'standard' | 'flotation'>('standard')
   const [isLt, setIsLt] = useState(false)
   const [width, setWidth] = useState(205)
@@ -347,12 +385,23 @@ export function TireFormWizard() {
       {/* Step content */}
       <div className="px-4 pb-24">
         {currentStep === 1 && (
-          <div>
-            <ImageUpload
-              orgId={organization?.id || ''}
-              currentImages={images}
-              onImagesChange={setImages}
-            />
+          <div className="space-y-4">
+            {organization ? (
+              <ImageUpload
+                orgId={organization.id}
+                currentImages={images}
+                onImagesChange={setImages}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-32 bg-muted rounded-lg">
+                <p className="text-muted-foreground">Loading...</p>
+              </div>
+            )}
+            {images.length > 0 && (
+              <p className="text-sm text-muted-foreground text-center">
+                {images.length} photo{images.length !== 1 ? 's' : ''} added
+              </p>
+            )}
           </div>
         )}
         
