@@ -118,6 +118,13 @@ export function BottomNav() {
       
       // Notify form to update
       window.dispatchEvent(new CustomEvent('tireImageAdded'))
+      
+      // Auto-reopen camera for next photo after a brief delay
+      setTimeout(() => {
+        if (cameraInputRef.current) {
+          cameraInputRef.current.click()
+        }
+      }, 300)
     } catch (error) {
       console.error('Error uploading image:', error)
       alert('Failed to upload image. Please try again.')

@@ -263,7 +263,7 @@ export function TireFormWizard() {
         condition: condition,
         tread_depth: treadDepth ? parseInt(treadDepth) : null,
         dot_week: dotWeek ? parseInt(dotWeek) : null,
-        dot_year: dotYear ? parseInt(dotYear) : null,
+        dot_year: dotYear ? 2000 + parseInt(dotYear) : null,
         price: price ? parseFloat(price) : 0,
         quantity: quantity,
         sale_type: saleType,
