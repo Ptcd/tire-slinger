@@ -612,7 +612,7 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
                           {b.brand} ({b.count})
                         </SelectItem>
                       ))}
-                      {organization?.allow_custom_brand && (
+                      {(organization?.allow_custom_brand !== false) && (
                         <SelectItem value="__custom__">Other (custom entry)...</SelectItem>
                       )}
                     </SelectContent>
@@ -628,7 +628,7 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Model {organization?.require_model_selection && <span className="text-red-500">*</span>}
+                  Model {(organization?.require_model_selection === true) && <span className="text-red-500">*</span>}
                 </FormLabel>
                 <Select
                   value={field.value || ''}
@@ -646,7 +646,7 @@ export function TireForm({ tire, onSuccess }: TireFormProps) {
                         {m.model_name} {m.category && `(${m.category})`}
                       </SelectItem>
                     ))}
-                    {!organization?.require_model_selection && (
+                    {(organization?.require_model_selection !== true) && (
                       <SelectItem value="__unknown__">Unknown / Skip</SelectItem>
                     )}
                   </SelectContent>

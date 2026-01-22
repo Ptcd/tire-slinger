@@ -14,8 +14,8 @@ export interface Organization {
   dot_tracking_enabled: boolean
   dot_max_age_years: number
   dot_warning_days: number
-  allow_custom_brand: boolean
-  require_model_selection: boolean
+  allow_custom_brand?: boolean
+  require_model_selection?: boolean
   created_at: string
   updated_at: string
 }
