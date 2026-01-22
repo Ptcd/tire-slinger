@@ -51,8 +51,10 @@ function parseSize(sizeStr: string): {
     cleanSize = cleanSize.replace(/^LT\s*/, '')
   }
   
-  // Try standard format: 235/70R18 (may have extra stuff after like "106T SL BSW")
-  const standardRegex = /^(\d+)\/(\d+)R(\d+)/
+  // Try standard format: 235/70R18 - only capture 2 digits for rim diameter
+  // Rim diameters are 14-24, never more than 2 digits
+  // Width can be 2-3 digits (155-315), aspect ratio is always 2 digits (30-85)
+  const standardRegex = /^(\d{2,3})\/(\d{2})R(\d{2})/
   const standardMatch = cleanSize.match(standardRegex)
   
   if (standardMatch) {
@@ -72,8 +74,8 @@ function parseSize(sizeStr: string): {
     }
   }
   
-  // Try flotation format: 35X12.50R20 or 33X12.50R17
-  const flotationRegex = /^(\d+)[Xx]([\d.]+)R(\d+)/
+  // Try flotation format: 35X12.50R20 - only capture 2 digits for rim
+  const flotationRegex = /^(\d+)[Xx]([\d.]+)R(\d{2})/
   const flotationMatch = cleanSize.match(flotationRegex)
   
   if (flotationMatch) {
