@@ -8,10 +8,12 @@ export async function GET() {
     const supabase = await createClient()
     console.log('[API] Supabase client created successfully')
 
+    // Fetch all years - need large limit since Supabase defaults to 1000
     const { data, error } = await supabase
       .from('fitment_vehicles')
       .select('year')
       .order('year', { ascending: false })
+      .limit(100000)
 
     if (error) {
       console.error('[API] Supabase query error:', JSON.stringify(error, null, 2))
