@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Yellow background with rounded corners -->
+  <rect width="512" height="512" rx="80" fill="#FFD700"/>
+  
+  <!-- Motion/speed lines behind tire -->
+  <g opacity="0.3">
+    <path d="M 100 256 L 150 256" stroke="#FFA500" stroke-width="12" stroke-linecap="round" fill="none"/>
+    <path d="M 100 220 L 160 220" stroke="#FFA500" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M 100 292 L 160 292" stroke="#FFA500" stroke-width="10" stroke-linecap="round" fill="none"/>
+  </g>
+  
+  <!-- Main tire circle -->
+  <circle cx="256" cy="256" r="140" fill="#1a1a1a" stroke="#0a0a0a" stroke-width="8"/>
+  
+  <!-- Inner rim circle -->
+  <circle cx="256" cy="256" r="90" fill="#2a2a2a" stroke="#1a1a1a" stroke-width="4"/>
+  
+  <!-- Tire tread pattern - simple and bold for visibility -->
+  <g stroke="#3a3a3a" stroke-width="6" fill="none" stroke-linecap="round">
+    <!-- Horizontal tread lines -->
+    <line x1="180" y1="200" x2="332" y2="200"/>
+    <line x1="180" y1="240" x2="332" y2="240"/>
+    <line x1="180" y1="280" x2="332" y2="280"/>
+    <line x1="180" y1="320" x2="332" y2="320"/>
+    
+    <!-- Vertical tread lines for texture -->
+    <line x1="220" y1="180" x2="220" y2="332"/>
+    <line x1="256" y1="180" x2="256" y2="332"/>
+    <line x1="292" y1="180" x2="292" y2="332"/>
+  </g>
+  
+  <!-- Hub cap center - cute detail -->
+  <circle cx="256" cy="256" r="50" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="3"/>
+  <circle cx="256" cy="256" r="30" fill="#4a4a4a"/>
+  
+  <!-- Small decorative spokes -->
+  <g stroke="#5a5a5a" stroke-width="4" fill="none">
+    <line x1="256" y1="226" x2="256" y2="286"/>
+    <line x1="226" y1="256" x2="286" y2="256"/>
+    <line x1="241" y1="241" x2="271" y2="271"/>
+    <line x1="271" y1="241" x2="241" y2="271"/>
+  </g>
+</svg>
+
