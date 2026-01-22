@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { X, Upload } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
@@ -15,10 +15,27 @@ interface ImageUploadProps {
 export function ImageUpload({ orgId, currentImages, onImagesChange }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isMounted = useRef(true)
+
+  // Track mount state to prevent alerts after unmount
+  useEffect(() => {
+    isMounted.current = true
+    return () => { isMounted.current = false }
+  }, [])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
+
+    // Check if orgId is valid
+    if (!orgId) {
+      console.error('Cannot upload: Organization ID not available yet')
+      alert('Please wait for the page to fully load before uploading images')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
 
     setUploading(true)
     const supabase = createClient()
@@ -54,14 +71,22 @@ export function ImageUpload({ orgId, currentImages, onImagesChange }: ImageUploa
         newUrls.push(urlData.publicUrl)
       }
 
-      onImagesChange([...currentImages, ...newUrls])
+      // Only update state if component is still mounted
+      if (isMounted.current) {
+        onImagesChange([...currentImages, ...newUrls])
+      }
     } catch (error) {
       console.error('Error uploading images:', error)
-      alert('Failed to upload images')
+      // Only show alert if component is still mounted
+      if (isMounted.current) {
+        alert('Failed to upload images. Please try again.')
+      }
     } finally {
-      setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      if (isMounted.current) {
+        setUploading(false)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
       }
     }
   }
