@@ -33,8 +33,6 @@ export function TireFormWizard() {
   const { organization } = useUser()
   const [currentStep, setCurrentStep] = useState(1)
   
-  // Debug logging
-  console.log('[TireWizard] Render - currentStep:', currentStep, 'org:', organization?.slug)
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   
@@ -65,20 +63,16 @@ export function TireFormWizard() {
   
   // Fetch brands when size changes (step 2 -> step 3)
   useEffect(() => {
-    console.log('[TireWizard] Brand useEffect triggered, currentStep:', currentStep)
     if (currentStep < 3) return
     
     async function fetchBrands() {
-      console.log('[TireWizard] fetchBrands called, sizeFormat:', sizeFormat)
       if (sizeFormat === 'standard') {
         if (!width || !aspectRatio || !rimDiameter) {
-          console.log('[TireWizard] Missing standard size values')
           setAvailableBrands([])
           return
         }
       } else {
         if (!flotationDiameter || !flotationWidth || !rimDiameter) {
-          console.log('[TireWizard] Missing flotation size values')
           setAvailableBrands([])
           return
         }
@@ -99,17 +93,12 @@ export function TireFormWizard() {
       }
       if (isLt) params.set('is_lt', 'true')
       
-      const url = `/api/tire-catalog/brands?${params}`
-      console.log('[TireWizard] Fetching brands from:', url)
-      
       try {
-        const res = await fetch(url)
-        console.log('[TireWizard] Brands response status:', res.status)
+        const res = await fetch(`/api/tire-catalog/brands?${params}`)
         const data = await res.json()
-        console.log('[TireWizard] Brands data:', data)
         setAvailableBrands(data.brands || [])
       } catch (err) {
-        console.error('[TireWizard] Error fetching brands:', err)
+        console.error('Error fetching brands:', err)
         setAvailableBrands([])
       } finally {
         setLoadingBrands(false)
@@ -473,10 +462,14 @@ export function TireFormWizard() {
         
         {currentStep === 3 && (
           <div className="space-y-4">
-            {console.log('[TireWizard] Rendering Step 3, loadingBrands:', loadingBrands, 'availableBrands:', availableBrands?.length)}
+            {/* Brand Selection */}
             <div>
               <Label>Brand</Label>
-              {showCustomBrand ? (
+              {loadingBrands ? (
+                <div className="h-14 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
+                  Loading brands...
+                </div>
+              ) : showCustomBrand ? (
                 <div className="flex gap-2 mt-2">
                   <Input
                     value={customBrand}
@@ -503,7 +496,7 @@ export function TireFormWizard() {
                 </div>
               ) : (
                 <Select 
-                  value={brand} 
+                  value={brand || undefined}
                   onValueChange={(v) => {
                     if (v === '__custom__') {
                       setShowCustomBrand(true)
@@ -512,17 +505,24 @@ export function TireFormWizard() {
                       setModel('')
                     }
                   }}
-                  disabled={loadingBrands}
                 >
                   <SelectTrigger className="h-14 text-lg">
-                    <SelectValue placeholder={loadingBrands ? 'Loading...' : 'Select brand'} />
+                    <SelectValue placeholder="Select brand" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableBrands.map((b) => (
-                      <SelectItem key={b.brand} value={b.brand}>
-                        {b.brand} ({b.count})
+                    {availableBrands && availableBrands.length > 0 ? (
+                      availableBrands.map((b) => (
+                        b.brand ? (
+                          <SelectItem key={b.brand} value={b.brand}>
+                            {b.brand} ({b.count})
+                          </SelectItem>
+                        ) : null
+                      ))
+                    ) : (
+                      <SelectItem value="__no_match__" disabled>
+                        No brands found for this size
                       </SelectItem>
-                    ))}
+                    )}
                     {(organization?.allow_custom_brand !== false) && (
                       <SelectItem value="__custom__">Other (type custom)...</SelectItem>
                     )}
@@ -530,25 +530,35 @@ export function TireFormWizard() {
                 </Select>
               )}
             </div>
+            
+            {/* Model Selection */}
             <div>
-              <Label>Model</Label>
-              <Select 
-                value={model} 
-                onValueChange={setModel} 
-                disabled={!brand || loadingModels || showCustomBrand}
-              >
-                <SelectTrigger className="h-14 text-lg">
-                  <SelectValue placeholder={loadingModels ? 'Loading...' : showCustomBrand ? 'Enter brand first' : 'Select model'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map((m) => (
-                    <SelectItem key={m.model_name} value={m.model_name}>
-                      {m.model_name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="">Skip / Unknown</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Model {!organization?.require_model_selection && <span className="text-muted-foreground">(optional)</span>}</Label>
+              {loadingModels ? (
+                <div className="h-14 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
+                  Loading models...
+                </div>
+              ) : (
+                <Select 
+                  value={model || undefined}
+                  onValueChange={(v) => setModel(v === '__skip__' ? '' : v)} 
+                  disabled={!brand || showCustomBrand}
+                >
+                  <SelectTrigger className="h-14 text-lg">
+                    <SelectValue placeholder={showCustomBrand ? 'Skip for custom brand' : brand ? 'Select model' : 'Select brand first'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__skip__">Skip / Unknown</SelectItem>
+                    {availableModels && availableModels.length > 0 && availableModels.map((m) => (
+                      m.model_name ? (
+                        <SelectItem key={m.model_name} value={m.model_name}>
+                          {m.model_name}
+                        </SelectItem>
+                      ) : null
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         )}
