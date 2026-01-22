@@ -54,6 +54,25 @@ function parseTireSizes(sizeString: string): string[] {
     .filter(s => s.length > 0)
 }
 
+function extractTrim(fullTrim: string, year: number, make: string, model: string): string {
+  // Input: "1997 Acura CL 2.2L Tires"
+  // Output: "2.2L"
+  if (!fullTrim) return 'Base'
+  
+  // Remove "YYYY Make Model " prefix and " Tires" suffix
+  let trim = fullTrim
+    .replace(new RegExp(`^${year}\\s+${make}\\s+${model}\\s+`, 'i'), '')
+    .replace(/\s+Tires?$/i, '')
+    .trim()
+  
+  // If trim is empty or just whitespace, use "Base"
+  if (!trim || trim.length === 0) {
+    return 'Base'
+  }
+  
+  return trim
+}
+
 async function main() {
   console.log('Reading CSV file...')
   
@@ -88,19 +107,27 @@ async function main() {
       continue
     }
     
+    // Extract clean trim from full trim description
+    const cleanTrim = extractTrim(trim || '', year, make, model)
+    
     fitmentRows.push({
       make,
       model,
       year,
-      trim: trim || 'Base',
+      trim: cleanTrim,
       tire_sizes: parseTireSizes(tireSizes)
     })
   }
   
   console.log(`Parsed ${fitmentRows.length} fitment rows (skipped ${skipped})`)
   
+  if (fitmentRows.length === 0) {
+    console.error('No fitment rows to import! Check CSV file path and format.')
+    process.exit(1)
+  }
+  
   // Insert vehicles directly (each year/trim is a separate row per schema)
-  console.log('Inserting vehicles...')
+  console.log('\n=== Step 1: Inserting vehicles ===')
   const vehicles = fitmentRows.map(row => ({
     year: row.year,
     make: row.make,
@@ -117,7 +144,8 @@ async function main() {
   
   const dedupedVehicles = Array.from(uniqueVehicles.values())
   console.log(`Found ${dedupedVehicles.length} unique vehicle entries`)
-  
+
+  let insertedVehicles = 0
   for (let i = 0; i < dedupedVehicles.length; i += 100) {
     const batch = dedupedVehicles.slice(i, i + 100)
     const { error } = await supabase
@@ -125,19 +153,30 @@ async function main() {
       .upsert(batch, { onConflict: 'year,make,model,trim' })
     
     if (error) {
-      console.error('Error inserting vehicles:', error)
+      console.error(`Error inserting vehicles batch ${i}-${i + batch.length}:`, error)
+      continue
     }
     
-    if (i % 500 === 0) {
-      console.log(`  Inserted ${i + batch.length} vehicles...`)
+    insertedVehicles += batch.length
+    if (i % 500 === 0 || i + batch.length >= dedupedVehicles.length) {
+      console.log(`  Inserted ${insertedVehicles}/${dedupedVehicles.length} vehicles...`)
     }
   }
   
+  console.log(`✓ Completed: ${insertedVehicles} vehicles inserted`)
+  
   // Get vehicle IDs
-  console.log('Fetching vehicle IDs...')
-  const { data: vehicleData } = await supabase
+  console.log('\n=== Step 2: Fetching vehicle IDs ===')
+  const { data: vehicleData, error: fetchError } = await supabase
     .from('fitment_vehicles')
     .select('id, year, make, model, trim')
+  
+  if (fetchError) {
+    console.error('Error fetching vehicle IDs:', fetchError)
+    process.exit(1)
+  }
+  
+  console.log(`Fetched ${vehicleData?.length || 0} vehicle records`)
   
   const vehicleIdMap = new Map<string, string>()
   for (const v of vehicleData || []) {
@@ -145,7 +184,7 @@ async function main() {
   }
   
   // Build tire size entries
-  console.log('Building tire size entries...')
+  console.log('\n=== Step 3: Building tire size entries ===')
   const tireSizeEntries: { vehicle_id: string, width: number, aspect_ratio: number, rim_diameter: number }[] = []
   
   const sizeRegex = /^(\d+)\/(\d+)R(\d+)$/
@@ -175,8 +214,10 @@ async function main() {
   }
   
   const dedupedSizes = Array.from(uniqueSizes.values())
-  console.log(`Inserting ${dedupedSizes.length} tire size entries...`)
-  
+  console.log(`Found ${dedupedSizes.length} unique tire size entries`)
+  console.log('\n=== Step 4: Inserting tire sizes ===')
+
+  let insertedSizes = 0
   for (let i = 0; i < dedupedSizes.length; i += 100) {
     const batch = dedupedSizes.slice(i, i + 100)
     const { error } = await supabase
@@ -184,15 +225,20 @@ async function main() {
       .upsert(batch, { onConflict: 'vehicle_id,width,aspect_ratio,rim_diameter' })
     
     if (error) {
-      console.error('Error inserting tire sizes:', error)
+      console.error(`Error inserting tire sizes batch ${i}-${i + batch.length}:`, error)
+      continue
     }
     
-    if (i % 1000 === 0) {
-      console.log(`  Inserted ${i + batch.length} tire sizes...`)
+    insertedSizes += batch.length
+    if (i % 1000 === 0 || i + batch.length >= dedupedSizes.length) {
+      console.log(`  Inserted ${insertedSizes}/${dedupedSizes.length} tire sizes...`)
     }
   }
   
-  console.log('Done!')
+  console.log(`✓ Completed: ${insertedSizes} tire sizes inserted`)
+  console.log('\n=== Import Complete ===')
+  console.log(`Vehicles: ${insertedVehicles}`)
+  console.log(`Tire Sizes: ${insertedSizes}`)
 }
 
 main().catch(console.error)
