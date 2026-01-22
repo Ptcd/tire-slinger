@@ -57,7 +57,7 @@ export function TireFormWizard() {
   const [dotWeek, setDotWeek] = useState('')
   const [dotYear, setDotYear] = useState('')
   const [saleType, setSaleType] = useState<'individual' | 'pair' | 'set'>('individual')
-  const [setPrice, setSetPrice] = useState('')
+  const [bundlePrice, setBundlePrice] = useState('')
   
   // Brand/model fetching
   const [availableBrands, setAvailableBrands] = useState<BrandOption[]>([])
@@ -229,7 +229,7 @@ export function TireFormWizard() {
         price: price ? parseFloat(price) : 0,
         quantity: quantity,
         sale_type: saleType,
-        set_price: setPrice ? parseFloat(setPrice) : null,
+        set_price: bundlePrice ? parseFloat(bundlePrice) : null,
         images: images,
         is_active: publish,
         status: publish ? 'published' : 'draft',
@@ -281,7 +281,7 @@ export function TireFormWizard() {
     setDotWeek('')
     setDotYear('')
     setSaleType('individual')
-    setSetPrice('')
+    setBundlePrice('')
     setCurrentStep(1)
     setShowSuccess(false)
   }
@@ -754,8 +754,8 @@ export function TireFormWizard() {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={setPrice}
-                    onChange={(e) => setSetPrice(e.target.value)}
+                    value={bundlePrice}
+                    onChange={(e) => setBundlePrice(e.target.value)}
                     placeholder="0.00"
                     className="h-14 text-lg pl-8"
                   />
