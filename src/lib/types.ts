@@ -109,17 +109,6 @@ export interface ExternalTask {
   updated_at: string
 }
 
-export interface AuditLog {
-  id: string
-  org_id: string
-  user_id: string | null
-  action: string
-  entity_type: string | null
-  entity_id: string | null
-  details: Record<string, unknown> | null
-  created_at: string
-}
-
 // Tire catalog entry (from Teoalida "Tires by brand" database)
 export interface TireCatalog {
   id: string

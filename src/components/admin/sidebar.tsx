@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   Calendar,
   Settings,
-  FileText,
   LogOut,
   CircleDot,
 } from 'lucide-react'
@@ -26,7 +25,6 @@ const navItems = [
   { href: '/admin/marketplace/tasks', label: 'Marketplace Tasks', icon: ShoppingBag },
   { href: '/admin/aging', label: 'Aging (DOT)', icon: Calendar },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
-  { href: '/admin/audit', label: 'Audit Log', icon: FileText },
 ]
 
 export function Sidebar() {

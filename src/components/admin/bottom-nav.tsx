@@ -23,7 +23,6 @@ const navItems = [
 const moreItems = [
   { href: '/admin/import', label: 'Import CSV' },
   { href: '/admin/settings', label: 'Settings' },
-  { href: '/admin/audit', label: 'Audit Log' },
 ]
 
 export function BottomNav() {
