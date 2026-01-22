@@ -16,6 +16,9 @@ export interface Organization {
   dot_warning_days: number
   allow_custom_brand?: boolean
   require_model_selection?: boolean
+  require_images?: boolean
+  require_tread_depth?: boolean
+  require_dot?: boolean
   created_at: string
   updated_at: string
 }

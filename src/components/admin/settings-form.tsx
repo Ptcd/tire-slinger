@@ -276,6 +276,66 @@ export function SettingsForm({ organization }: SettingsFormProps) {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="require_images"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mt-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Require Photos</FormLabel>
+                  <FormDescription>
+                    When enabled, workers must add at least one photo before saving
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value ?? false}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="require_tread_depth"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mt-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Require Tread Depth</FormLabel>
+                  <FormDescription>
+                    When enabled, workers must enter tread depth measurement
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value ?? false}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="require_dot"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 mt-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Require DOT Date Code</FormLabel>
+                  <FormDescription>
+                    When enabled, workers must enter the DOT manufacturing date code
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value ?? false}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
         </div>
 
         <Separator />
