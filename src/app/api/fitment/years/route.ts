@@ -8,15 +8,11 @@ export async function GET() {
     const supabase = await createClient()
     console.log('[API] Supabase client created successfully')
 
-    // Fetch all years - need large limit since Supabase defaults to 1000
-    const { data, error } = await supabase
-      .from('fitment_vehicles')
-      .select('year')
-      .order('year', { ascending: false })
-      .limit(100000)
+    // Use RPC function to get distinct years efficiently
+    const { data, error } = await supabase.rpc('get_distinct_years')
 
     if (error) {
-      console.error('[API] Supabase query error:', JSON.stringify(error, null, 2))
+      console.error('[API] Supabase RPC error:', JSON.stringify(error, null, 2))
       return NextResponse.json({ error: 'Failed to fetch years', details: error.message }, { status: 500 })
     }
 
@@ -25,8 +21,8 @@ export async function GET() {
       return NextResponse.json({ years: [] })
     }
 
-    // Get distinct years and sort descending
-    const years = Array.from(new Set(data.map((v) => v.year))).sort((a, b) => b - a)
+    // Extract years from the result
+    const years = data.map((row: { year: number }) => row.year)
     console.log(`[API] Returning ${years.length} distinct years: ${years.slice(0, 5).join(', ')}...`)
 
     return NextResponse.json({ years })
