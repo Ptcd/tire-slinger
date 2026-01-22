@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
+import { Copy, Check, ExternalLink } from 'lucide-react'
 import type { Organization } from '@/lib/types'
 
 interface SettingsFormProps {
@@ -28,6 +29,39 @@ interface SettingsFormProps {
 export function SettingsForm({ organization }: SettingsFormProps) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
+  const [copiedUrl, setCopiedUrl] = useState(false)
+  const [copiedEmbed, setCopiedEmbed] = useState(false)
+  const [embedHeight, setEmbedHeight] = useState(600)
+
+  // Get base URL
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin 
+    : process.env.NEXT_PUBLIC_SITE_URL || 'https://app.tireslingers.com'
+  
+  const publicUrl = `${baseUrl}/yard/${organization.slug}`
+  const embedUrl = `${baseUrl}/embed/${organization.slug}`
+  const embedCode = `<iframe 
+  src="${embedUrl}"
+  width="100%" 
+  height="${embedHeight}"
+  frameborder="0"
+  title="Tire Search">
+</iframe>`
+
+  const copyToClipboard = async (text: string, type: 'url' | 'embed') => {
+    try {
+      await navigator.clipboard.writeText(text)
+      if (type === 'url') {
+        setCopiedUrl(true)
+        setTimeout(() => setCopiedUrl(false), 2000)
+      } else {
+        setCopiedEmbed(true)
+        setTimeout(() => setCopiedEmbed(false), 2000)
+      }
+    } catch (error) {
+      console.error('Failed to copy:', error)
+    }
+  }
 
   const form = useForm<Organization>({
     defaultValues: organization,
@@ -312,6 +346,113 @@ export function SettingsForm({ organization }: SettingsFormProps) {
               />
             </div>
           )}
+        </div>
+
+        <Separator />
+
+        {/* Storefront & Sharing */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Storefront & Sharing</h2>
+          
+          {/* Public URL */}
+          <div className="space-y-2 mb-6">
+            <Label>Public Storefront URL</Label>
+            <div className="flex gap-2">
+              <Input
+                value={publicUrl}
+                readOnly
+                className="flex-1 font-mono text-sm"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(publicUrl, 'url')}
+              >
+                {copiedUrl ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                asChild
+              >
+                <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View
+                </a>
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Share this link with customers to view your inventory
+            </p>
+          </div>
+
+          {/* Embed Code */}
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center justify-between">
+              <Label>Embeddable Widget Code</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="embed-height" className="text-sm text-muted-foreground">
+                  Height:
+                </Label>
+                <Input
+                  id="embed-height"
+                  type="number"
+                  min="300"
+                  max="1200"
+                  step="50"
+                  value={embedHeight}
+                  onChange={(e) => setEmbedHeight(parseInt(e.target.value) || 600)}
+                  className="w-20"
+                />
+                <span className="text-sm text-muted-foreground">px</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Textarea
+                value={embedCode}
+                readOnly
+                className="flex-1 font-mono text-sm min-h-[120px]"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(embedCode, 'embed')}
+                className="self-start"
+              >
+                {copiedEmbed ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Copy and paste this code into your website to embed the tire search widget
+            </p>
+          </div>
+
+          {/* Live Preview */}
+          <div className="space-y-2">
+            <Label>Live Preview</Label>
+            <div className="border border-border rounded-lg overflow-hidden bg-muted">
+              <iframe
+                src={embedUrl}
+                width="100%"
+                height={embedHeight}
+                style={{ border: 'none' }}
+                title="Tire Search Widget Preview"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This is how the widget will appear on your website
+            </p>
+          </div>
         </div>
 
         <div className="flex justify-end">
