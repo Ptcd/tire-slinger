@@ -26,7 +26,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
       body: JSON.stringify({
         sender: {
           name: 'Tire Slingers',
-          email: 'noreply@junkcarsmilwaukee.com',
+          email: 'tires@junkcarsmilwaukee.com',
         },
         to: [{ email: to }],
         subject,
