@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,12 +63,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invite already sent to this email' }, { status: 400 })
     }
 
-    // Generate token using database function
-    const { data: tokenData, error: tokenError } = await supabase.rpc('generate_invite_token')
-
-    if (tokenError || !tokenData) {
-      return NextResponse.json({ error: 'Failed to generate invite token' }, { status: 500 })
-    }
+    // Generate token in JavaScript (simpler than database function)
+    const tokenData = crypto.randomBytes(32).toString('base64url')
 
     // Create invite
     const { data: invite, error: inviteError } = await supabase
