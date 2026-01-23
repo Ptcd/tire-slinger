@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button'
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/inventory', label: 'Inventory', icon: Package },
-  { href: '/admin/import', label: 'Import', icon: Upload },
+  { href: '/admin/import', label: 'Import', icon: Upload, adminOnly: true },
   { 
     href: '/admin/stock', 
     label: 'Stock Intelligence', 
@@ -38,12 +38,12 @@ const navItems = [
   { href: '/admin/requests', label: 'Requests', icon: Inbox, hasBadge: true },
   { href: '/admin/marketplace/tasks', label: 'Marketplace Tasks', icon: ShoppingBag },
   { href: '/admin/aging', label: 'Aging (DOT)', icon: Calendar },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/settings', label: 'Settings', icon: Settings, adminOnly: true },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { organization } = useUser()
+  const { organization, profile } = useUser()
   const router = useRouter()
   const [newRequestCount, setNewRequestCount] = useState(0)
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['/admin/stock']))
@@ -104,8 +104,13 @@ export function Sidebar() {
     setExpandedItems(newExpanded)
   }
 
-  // Only show Aging if DOT tracking is enabled
+  // Filter nav items based on permissions and org settings
   const filteredNavItems = navItems.filter((item) => {
+    // Hide admin-only items for staff
+    if (item.adminOnly && profile?.role !== 'admin') {
+      return false
+    }
+    // Only show Aging if DOT tracking is enabled
     if (item.href === '/admin/aging') {
       return organization?.dot_tracking_enabled === true
     }

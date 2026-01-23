@@ -257,3 +257,17 @@ export interface CustomerRequestFormData {
   notes?: string
 }
 
+// Team invite
+export interface TeamInvite {
+  id: string
+  org_id: string
+  email: string
+  role: 'admin' | 'staff'
+  token: string
+  invited_by: string
+  expires_at: string
+  accepted_at: string | null
+  created_at: string
+  updated_at: string
+}
+

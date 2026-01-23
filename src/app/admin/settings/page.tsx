@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SettingsForm } from '@/components/admin/settings-form'
-import { Card } from '@/components/ui/card'
+import { SettingsTabs } from '@/components/admin/settings-tabs'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -13,12 +12,17 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('org_id')
+    .select('org_id, role')
     .eq('id', user.id)
     .single()
 
   if (!profile) {
     redirect('/login')
+  }
+
+  // Only admins can access settings
+  if (profile.role !== 'admin') {
+    redirect('/admin')
   }
 
   const { data: organization } = await supabase
@@ -38,9 +42,7 @@ export default async function SettingsPage() {
         <p className="text-muted-foreground">Manage your yard information and preferences</p>
       </div>
 
-      <Card className="p-6">
-        <SettingsForm organization={organization} />
-      </Card>
+      <SettingsTabs organization={organization} />
     </div>
   )
 }

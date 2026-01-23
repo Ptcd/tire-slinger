@@ -1,7 +1,27 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { CSVImporter } from '@/components/admin/csv-importer'
 import { Card } from '@/components/ui/card'
 
-export default function ImportPage() {
+export default async function ImportPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  // Only admins can access import
+  if (profile?.role !== 'admin') {
+    redirect('/admin')
+  }
+
   return (
     <div className="space-y-6">
       <div>
