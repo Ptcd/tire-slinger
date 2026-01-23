@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
+import { sendEmail, getInviteEmailHtml } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,6 +26,15 @@ export async function POST(request: NextRequest) {
     if (!profile.org_id) {
       return NextResponse.json({ error: 'User must belong to an organization' }, { status: 400 })
     }
+
+    // Get organization name for the email
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', profile.org_id)
+      .single()
+
+    const orgName = org?.name || 'your organization'
 
     const body = await request.json()
     const { email, role = 'staff' } = body
@@ -89,6 +99,13 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin
     const inviteUrl = `${baseUrl}/invite/${invite.token}`
 
+    // Send invite email
+    const emailResult = await sendEmail({
+      to: email,
+      subject: `You're invited to join ${orgName} on Tire Slingers`,
+      html: getInviteEmailHtml(orgName, inviteUrl, role),
+    })
+
     return NextResponse.json({
       invite: {
         id: invite.id,
@@ -97,6 +114,7 @@ export async function POST(request: NextRequest) {
         expires_at: invite.expires_at,
         invite_url: inviteUrl,
       },
+      email_sent: emailResult.success,
     })
   } catch (error) {
     console.error('Error in POST /api/invites:', error)
