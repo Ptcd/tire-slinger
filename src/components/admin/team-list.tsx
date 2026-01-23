@@ -38,7 +38,11 @@ export function TeamList() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'admin' | 'staff'>('staff')
 
-  // Check if user is admin
+  useEffect(() => {
+    loadData()
+  }, [organization?.id])
+
+  // Check if user is admin - must be after hooks
   if (profile?.role !== 'admin') {
     return (
       <Alert>
@@ -48,10 +52,6 @@ export function TeamList() {
       </Alert>
     )
   }
-
-  useEffect(() => {
-    loadData()
-  }, [organization?.id])
 
   async function loadData() {
     if (!organization?.id) return
