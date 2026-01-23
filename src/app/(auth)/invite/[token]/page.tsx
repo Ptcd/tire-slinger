@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { InviteSignupForm } from '@/components/auth/invite-signup-form'
 
+// Team invite acceptance page
+
 export default async function InvitePage({
   params,
 }: {
