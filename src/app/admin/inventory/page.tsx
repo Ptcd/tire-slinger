@@ -32,14 +32,14 @@ export default async function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Inventory</h1>
-          <p className="text-muted-foreground">Manage your tire listings</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Inventory</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your tire listings</p>
         </div>
         <Link href="/admin/inventory/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button size="sm">
+            <Plus className="mr-1 h-4 w-4" />
             Add Tire
           </Button>
         </Link>

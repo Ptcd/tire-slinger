@@ -7,23 +7,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export default function AdminDashboard() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground">
             Dash<span className="text-primary">board</span>
           </h1>
-          <p className="text-muted-foreground">Overview of your tire inventory</p>
+          <p className="text-sm sm:text-base text-muted-foreground">Overview of your tire inventory</p>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/inventory/new">
-            <Button className="font-bold">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className="font-bold" size="sm">
+              <Plus className="mr-1 h-4 w-4" />
               Add Tire
             </Button>
           </Link>
           <Link href="/admin/inventory">
-            <Button variant="outline" className="border-border">
-              <Package className="mr-2 h-4 w-4" />
+            <Button variant="outline" className="border-border" size="sm">
+              <Package className="mr-1 h-4 w-4" />
               View Inventory
             </Button>
           </Link>

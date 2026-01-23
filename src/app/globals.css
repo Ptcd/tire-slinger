@@ -185,7 +185,7 @@
   
   /* Add padding at bottom for fixed nav */
   main {
-    padding-bottom: 80px !important;
+    padding-bottom: 100px !important;
   }
   
   /* Hide desktop-only elements */

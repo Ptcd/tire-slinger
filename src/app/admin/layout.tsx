@@ -17,7 +17,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Desktop sidebar - hidden on mobile */}
       <div className="hidden md:fixed md:inset-y-0 md:left-0 md:z-50 md:flex">
         <Sidebar />
