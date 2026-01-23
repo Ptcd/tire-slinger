@@ -61,34 +61,34 @@ export function TireSearch({ orgSlug, initialFilters }: TireSearchProps) {
       
       <TabsContent value="size" className="space-y-4">
         <div className="flex flex-col md:flex-row gap-4">
-          <Select value={sizeSearch.width} onValueChange={(v) => setSizeSearch({ ...sizeSearch, width: v })}>
+          <Select value={sizeSearch.width || '__any__'} onValueChange={(v) => setSizeSearch({ ...sizeSearch, width: v === '__any__' ? '' : v })}>
             <SelectTrigger className="flex-1">
               <SelectValue placeholder="Width" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Width</SelectItem>
+              <SelectItem value="__any__">Any Width</SelectItem>
               {COMMON_WIDTHS.map((w) => (
                 <SelectItem key={w} value={w.toString()}>{w}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={sizeSearch.aspectRatio} onValueChange={(v) => setSizeSearch({ ...sizeSearch, aspectRatio: v })}>
+          <Select value={sizeSearch.aspectRatio || '__any__'} onValueChange={(v) => setSizeSearch({ ...sizeSearch, aspectRatio: v === '__any__' ? '' : v })}>
             <SelectTrigger className="flex-1">
               <SelectValue placeholder="Aspect Ratio" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Ratio</SelectItem>
+              <SelectItem value="__any__">Any Ratio</SelectItem>
               {COMMON_ASPECT_RATIOS.map((ar) => (
                 <SelectItem key={ar} value={ar.toString()}>{ar}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={sizeSearch.rimDiameter} onValueChange={(v) => setSizeSearch({ ...sizeSearch, rimDiameter: v })}>
+          <Select value={sizeSearch.rimDiameter || '__any__'} onValueChange={(v) => setSizeSearch({ ...sizeSearch, rimDiameter: v === '__any__' ? '' : v })}>
             <SelectTrigger className="flex-1">
               <SelectValue placeholder="Rim Size" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Any Rim</SelectItem>
+              <SelectItem value="__any__">Any Rim</SelectItem>
               {COMMON_RIM_DIAMETERS.map((rd) => (
                 <SelectItem key={rd} value={rd.toString()}>{rd}"</SelectItem>
               ))}
