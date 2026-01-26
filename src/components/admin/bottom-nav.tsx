@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, Package, Plus, Camera, ClipboardList, Menu, Inbox } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Home, Package, Plus, Camera, ClipboardList, Menu, Inbox, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -31,12 +31,20 @@ const moreItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const [moreOpen, setMoreOpen] = useState(false)
   const { organization } = useUser()
   const [newRequestCount, setNewRequestCount] = useState(0)
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const isOnNewTirePage = pathname === '/admin/inventory/new'
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   useEffect(() => {
     if (!organization) return
@@ -222,6 +230,16 @@ export function BottomNav() {
                   {item.label}
                 </Link>
               ))}
+              <button
+                onClick={() => {
+                  setMoreOpen(false)
+                  handleLogout()
+                }}
+                className="flex items-center h-12 px-4 text-white bg-red-600 hover:bg-red-700 rounded-lg mt-2"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </button>
             </div>
           </SheetContent>
         </Sheet>
