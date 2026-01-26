@@ -30,7 +30,7 @@ const STEPS = [
 
 export function TireFormWizard() {
   const router = useRouter()
-  const { organization } = useUser()
+  const { organization, loading, error } = useUser()
   const [currentStep, setCurrentStep] = useState(1)
   
   const [saving, setSaving] = useState(false)
@@ -386,21 +386,36 @@ export function TireFormWizard() {
       <div className="px-4 pb-24">
         {currentStep === 1 && (
           <div className="space-y-4">
-            {organization ? (
-              <ImageUpload
-                orgId={organization.id}
-                currentImages={images}
-                onImagesChange={setImages}
-              />
-            ) : (
+            {loading ? (
               <div className="flex items-center justify-center h-32 bg-muted rounded-lg">
                 <p className="text-muted-foreground">Loading...</p>
               </div>
-            )}
-            {images.length > 0 && (
-              <p className="text-sm text-muted-foreground text-center">
-                {images.length} photo{images.length !== 1 ? 's' : ''} added
-              </p>
+            ) : error || !organization ? (
+              <div className="flex flex-col items-center justify-center h-32 bg-muted rounded-lg space-y-3 p-4">
+                <p className="text-muted-foreground text-center">
+                  {error ? 'Failed to load organization. Please try again.' : 'Organization not found.'}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <>
+                <ImageUpload
+                  orgId={organization.id}
+                  currentImages={images}
+                  onImagesChange={setImages}
+                />
+                {images.length > 0 && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    {images.length} photo{images.length !== 1 ? 's' : ''} added
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}
