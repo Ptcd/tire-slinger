@@ -30,7 +30,7 @@ const STEPS = [
 
 export function TireFormWizard() {
   const router = useRouter()
-  const { organization, loading, error } = useUser()
+  const { organization, loading, error, retry } = useUser()
   const [currentStep, setCurrentStep] = useState(1)
   
   const [saving, setSaving] = useState(false)
@@ -392,13 +392,13 @@ export function TireFormWizard() {
               </div>
             ) : error || !organization ? (
               <div className="flex flex-col items-center justify-center h-32 bg-muted rounded-lg space-y-3 p-4">
-                <p className="text-muted-foreground text-center">
-                  {error ? 'Failed to load organization. Please try again.' : 'Organization not found.'}
+                <p className="text-muted-foreground text-center text-sm">
+                  {error ? error.message : 'Organization not found.'}
                 </p>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => window.location.reload()}
+                  onClick={retry}
                 >
                   Retry
                 </Button>

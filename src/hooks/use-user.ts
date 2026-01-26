@@ -11,6 +11,67 @@ export function useUser() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
+  const loadProfile = async (userId: string) => {
+    const supabase = createClient()
+    try {
+      setError(null) // Clear previous errors
+      setLoading(true)
+      
+      // First, load the profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (profileError) {
+        console.error('Error loading profile:', profileError)
+        setError(new Error(`Failed to load profile: ${profileError.message}`))
+        setLoading(false)
+        return
+      }
+
+      if (!profileData) {
+        setError(new Error('Profile not found'))
+        setLoading(false)
+        return
+      }
+
+      setProfile(profileData as Profile)
+
+      // Then, load the organization separately if org_id exists
+      if (profileData.org_id) {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', profileData.org_id)
+          .single()
+
+        if (orgError) {
+          console.error('Error loading organization:', orgError)
+          setError(new Error(`Failed to load organization: ${orgError.message}`))
+          setOrganization(null)
+        } else if (orgData) {
+          setOrganization(orgData as Organization)
+          setError(null) // Clear any previous errors if we successfully loaded org
+        } else {
+          setError(new Error('Organization not found'))
+          setOrganization(null)
+        }
+      } else {
+        // Profile exists but has no org_id
+        setError(new Error('Your account is not associated with an organization'))
+        setOrganization(null)
+      }
+      
+      setLoading(false)
+    } catch (err) {
+      console.error('Unexpected error loading profile:', err)
+      setError(err instanceof Error ? err : new Error('Unexpected error occurred'))
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const supabase = createClient()
 
@@ -47,37 +108,15 @@ export function useUser() {
       }
     })
 
-    async function loadProfile(userId: string) {
-      try {
-        setError(null) // Clear previous errors
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*, organizations(*)')
-          .eq('id', userId)
-          .single()
-
-        if (profileError) {
-          setError(profileError as Error)
-          setLoading(false)
-          return
-        }
-
-        if (profileData) {
-          setProfile(profileData as Profile)
-          if (profileData.organizations) {
-            setOrganization(profileData.organizations as Organization)
-          }
-        }
-        setLoading(false)
-      } catch (err) {
-        setError(err as Error)
-        setLoading(false)
-      }
-    }
-
     return () => subscription.unsubscribe()
   }, [])
 
-  return { user, profile, organization, loading, error }
+  const retry = () => {
+    if (user) {
+      loadProfile(user.id)
+    }
+  }
+
+  return { user, profile, organization, loading, error, retry }
 }
 
