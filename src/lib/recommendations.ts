@@ -16,6 +16,42 @@ const DEFAULT_SETTINGS: Omit<InventorySettings, 'org_id' | 'created_at' | 'updat
   enable_request_demand: true,
 }
 
+interface StarterSize {
+  size_key: string
+  category: 'passenger' | 'crossover' | 'truck'
+  target: number
+}
+
+const STARTER_SIZES: StarterSize[] = [
+  // Passenger / Sedan
+  { size_key: '195-65-15', category: 'passenger', target: 4 },
+  { size_key: '205-55-16', category: 'passenger', target: 4 },
+  { size_key: '215-60-16', category: 'passenger', target: 4 },
+  { size_key: '215-65-16', category: 'passenger', target: 4 },
+  { size_key: '215-55-17', category: 'passenger', target: 4 },
+  { size_key: '225-45-17', category: 'passenger', target: 4 },
+  { size_key: '225-50-17', category: 'passenger', target: 4 },
+  // Crossover / CUV
+  { size_key: '225-65-17', category: 'crossover', target: 8 },
+  { size_key: '225-60-17', category: 'crossover', target: 4 },
+  { size_key: '235-65-17', category: 'crossover', target: 4 },
+  { size_key: '235-55-18', category: 'crossover', target: 4 },
+  { size_key: '225-55-18', category: 'crossover', target: 4 },
+  // Truck / SUV
+  { size_key: '245-75-16', category: 'truck', target: 4 },
+  { size_key: '265-70-17', category: 'truck', target: 8 },
+  { size_key: '265-60-18', category: 'truck', target: 4 },
+  { size_key: '265-65-18', category: 'truck', target: 4 },
+  { size_key: '275-55-20', category: 'truck', target: 4 },
+  { size_key: '275-60-20', category: 'truck', target: 4 },
+]
+
+const STARTER_SALES_THRESHOLD = 10 // starter sizes phase out after this many total sales
+
+const starterBySize = new Map<string, StarterSize>(
+  STARTER_SIZES.map(s => [s.size_key, s])
+)
+
 interface SizeMetrics {
   size_key: string
   size_display: string
@@ -106,6 +142,9 @@ export async function computeRecommendations(orgId: string, supabaseClient?: Sup
     const current = salesBySize.get(sale.size_key) || 0
     salesBySize.set(sale.size_key, current + sale.quantity_sold)
   }
+
+  const totalSales = Array.from(salesBySize.values()).reduce((a, b) => a + b, 0)
+  const useStarterSizes = totalSales < STARTER_SALES_THRESHOLD
   
   // 4. Get searches in window (no-result only)
   const searchWindowStart = new Date()
@@ -150,7 +189,12 @@ export async function computeRecommendations(orgId: string, supabaseClient?: Sup
     ...searchesBySize.keys(),
     ...requestsBySize.keys(),
   ])
-  
+  if (useStarterSizes) {
+    for (const s of STARTER_SIZES) {
+      allSizes.add(s.size_key)
+    }
+  }
+
   // 7. Calculate metrics for each size
   const metrics: SizeMetrics[] = []
   
@@ -187,7 +231,13 @@ export async function computeRecommendations(orgId: string, supabaseClient?: Sup
     
     // Target = max demand * safety multiplier
     const maxDemand = Math.max(salesPerMonth, searchesPerMonth, requestsPerMonth)
-    const targetStock = Math.ceil(maxDemand * settings.safety_multiplier)
+    let targetStock = Math.ceil(maxDemand * settings.safety_multiplier)
+
+    const starterEntry = useStarterSizes ? starterBySize.get(m.size_key) : null
+    if (starterEntry && targetStock < starterEntry.target) {
+      targetStock = starterEntry.target
+      reasons.push(`Recommended starter size (${starterEntry.category})`)
+    }
     
     // Need units
     let needUnits = targetStock - m.current_stock
