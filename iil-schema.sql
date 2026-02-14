@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS stock_recommendations (
   current_stock INTEGER NOT NULL DEFAULT 0,
   target_stock INTEGER NOT NULL DEFAULT 0,
   need_units INTEGER NOT NULL DEFAULT 0,
-  action TEXT NOT NULL DEFAULT 'hold' CHECK (action IN ('stock', 'purge', 'hold')),
+  action TEXT NOT NULL DEFAULT 'hold' CHECK (action IN ('stock', 'purge', 'hold', 'watchlist')),
   priority TEXT NOT NULL DEFAULT 'low' CHECK (priority IN ('high', 'medium', 'low')),
   flag TEXT CHECK (flag IN ('normal', 'overstock', 'stale')),
   sales_90d INTEGER DEFAULT 0,

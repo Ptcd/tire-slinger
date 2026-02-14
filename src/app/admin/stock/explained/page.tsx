@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { RefreshCw, Download, ChevronDown, Search, TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react'
+import { RefreshCw, Download, ChevronDown, Search, TrendingUp, TrendingDown, Minus, ChevronRight, Eye } from 'lucide-react'
 import type { StockRecommendation } from '@/lib/types'
 
 export default function ExplainedStockPage() {
@@ -115,6 +115,7 @@ export default function ExplainedStockPage() {
   const ActionIcon = ({ action }: { action: string }) => {
     if (action === 'stock') return <TrendingUp className="h-4 w-4 text-green-600" />
     if (action === 'purge') return <TrendingDown className="h-4 w-4 text-red-600" />
+    if (action === 'watchlist') return <Eye className="h-4 w-4 text-amber-500" />
     return <Minus className="h-4 w-4 text-gray-400" />
   }
 
@@ -157,13 +158,14 @@ export default function ExplainedStockPage() {
             <SelectItem value="all">All Actions</SelectItem>
             <SelectItem value="stock">Need to Stock</SelectItem>
             <SelectItem value="purge">Need to Purge</SelectItem>
+            <SelectItem value="watchlist">Watchlist</SelectItem>
             <SelectItem value="hold">Hold (No Action)</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Total Sizes</p>
           <p className="text-2xl font-bold">{recommendations.length}</p>
@@ -178,6 +180,12 @@ export default function ExplainedStockPage() {
           <p className="text-sm text-red-700">Need to Purge</p>
           <p className="text-2xl font-bold text-red-700">
             {recommendations.filter(r => r.action === 'purge').length}
+          </p>
+        </Card>
+        <Card className="p-4 border-amber-200 bg-amber-50">
+          <p className="text-sm text-amber-700">Watchlist</p>
+          <p className="text-2xl font-bold text-amber-700">
+            {recommendations.filter(r => r.action === 'watchlist').length}
           </p>
         </Card>
         <Card className="p-4">

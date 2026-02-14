@@ -221,7 +221,7 @@ export interface StockRecommendation {
   current_stock: number
   target_stock: number
   need_units: number
-  action: 'stock' | 'purge' | 'hold'
+  action: 'stock' | 'purge' | 'hold' | 'watchlist'
   priority: 'high' | 'medium' | 'low'
   flag: 'normal' | 'overstock' | 'stale' | null
   sales_90d: number

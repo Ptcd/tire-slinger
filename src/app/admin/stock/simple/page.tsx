@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/hooks/use-user'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ export default function SimpleStockPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [tvMode, setTvMode] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const loadRecommendations = async () => {
     if (!organization) return
@@ -67,7 +68,7 @@ export default function SimpleStockPage() {
 
   const handleTvMode = () => {
     if (!tvMode) {
-      document.documentElement.requestFullscreen()
+      containerRef.current?.requestFullscreen()
     } else {
       document.exitFullscreen()
     }
@@ -96,9 +97,10 @@ export default function SimpleStockPage() {
 
   const stockRecs = recommendations.filter(r => r.action === 'stock')
   const purgeRecs = recommendations.filter(r => r.action === 'purge')
+  const watchlistRecs = recommendations.filter(r => r.action === 'watchlist')
 
   return (
-    <div className={`space-y-6 ${tvMode ? 'p-8' : ''}`}>
+    <div ref={containerRef} className={`space-y-6 ${tvMode ? 'p-8 bg-background' : ''}`}>
       {/* Header - Hidden in print */}
       <div className="flex items-center justify-between print:hidden">
         <div>
@@ -210,6 +212,41 @@ export default function SimpleStockPage() {
                         <TableCell>
                           <Badge variant={rec.flag === 'stale' ? 'destructive' : 'secondary'}>
                             {rec.flag === 'stale' ? 'STALE' : 'OVERSTOCK'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {/* Watchlist */}
+          {watchlistRecs.length > 0 && (
+            <div>
+              <h2 className="text-xl font-bold mb-4 text-amber-600 print:text-black">
+                WATCHLIST ({watchlistRecs.length} sizes)
+              </h2>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-lg">Size</TableHead>
+                      <TableHead className="text-lg text-right">Current</TableHead>
+                      <TableHead className="text-lg text-right">Age (days)</TableHead>
+                      <TableHead className="text-lg">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {watchlistRecs.map((rec) => (
+                      <TableRow key={rec.id} className="text-lg">
+                        <TableCell className="font-bold">{rec.size_display}</TableCell>
+                        <TableCell className="text-right">{rec.current_stock}</TableCell>
+                        <TableCell className="text-right">{rec.oldest_age_days ?? '—'}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-300">
+                            WATCHING
                           </Badge>
                         </TableCell>
                       </TableRow>

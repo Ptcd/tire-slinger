@@ -243,7 +243,7 @@ export async function computeRecommendations(orgId: string, supabaseClient?: Sup
     let needUnits = targetStock - m.current_stock
     
     // Determine action
-    let action: 'stock' | 'purge' | 'hold' = 'hold'
+    let action: 'stock' | 'purge' | 'hold' | 'watchlist' = 'hold'
     let flag: 'normal' | 'overstock' | 'stale' | null = 'normal'
     
     // Check for stale
@@ -256,12 +256,29 @@ export async function computeRecommendations(orgId: string, supabaseClient?: Sup
       }
     }
     // Check for overstock
-    else if (m.current_stock > targetStock * (1 + settings.overstock_percent / 100)) {
-      flag = 'overstock'
+    else if (m.current_stock > targetStock) {
       const excess = m.current_stock - targetStock
-      reasons.push(`Overstocked: ${excess} units above target`)
-      action = 'purge'
-      needUnits = -(m.current_stock - targetStock)
+      if (excess >= 2) {
+        // Clear overstock — purge immediately
+        flag = 'overstock'
+        reasons.push(`Overstocked: ${excess} units above target`)
+        action = 'purge'
+        needUnits = -excess
+      } else if (maxDemand === 0 && m.current_stock === 1) {
+        // Singleton with zero demand — check age
+        if (m.oldest_age_days !== null && m.oldest_age_days >= 60) {
+          flag = 'overstock'
+          reasons.push('No demand and sitting 60+ days')
+          action = 'purge'
+          needUnits = -1
+        } else {
+          flag = 'overstock'
+          reasons.push('No demand — watching for 60 days')
+          action = 'watchlist'
+          needUnits = 0
+        }
+      }
+      // else: excess == 1 with active demand — leave as hold (will likely sell)
     }
     // Check if need to stock
     else if (needUnits > 0) {
@@ -295,6 +312,8 @@ export async function computeRecommendations(orgId: string, supabaseClient?: Sup
       if (flag === 'stale') priority = 'high'
       else if (Math.abs(needUnits) >= 6) priority = 'high'
       else if (Math.abs(needUnits) >= 3) priority = 'medium'
+    } else if (action === 'watchlist') {
+      priority = 'low'
     }
     
     recommendations.push({
