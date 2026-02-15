@@ -6,14 +6,6 @@ import { useUser } from '@/hooks/use-user'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { Printer, RefreshCw, Tv, Download } from 'lucide-react'
 import type { StockRecommendation } from '@/lib/types'
 
@@ -100,7 +92,7 @@ export default function SimpleStockPage() {
   const watchlistRecs = recommendations.filter(r => r.action === 'watchlist')
 
   return (
-    <div ref={containerRef} className={`space-y-6 ${tvMode ? 'p-8 bg-background' : ''}`}>
+    <div ref={containerRef} className={`space-y-8 ${tvMode ? 'p-8 bg-background' : ''}`}>
       {/* Header - Hidden in print */}
       <div className="flex items-center justify-between print:hidden">
         <div>
@@ -138,49 +130,46 @@ export default function SimpleStockPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Loading recommendations...</div>
+        <div className="text-center py-12 text-lg">Loading recommendations...</div>
       ) : recommendations.length === 0 ? (
         <Card className="p-12 text-center">
-          <p className="text-muted-foreground">No recommendations at this time.</p>
+          <p className="text-muted-foreground text-lg">No recommendations at this time.</p>
           <Button className="mt-4" onClick={refreshRecommendations}>
             Generate Recommendations
           </Button>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {/* Need to Stock */}
           {stockRecs.length > 0 && (
             <div>
-              <h2 className="text-xl font-bold mb-4 text-green-700 print:text-black">
-                NEED TO STOCK ({stockRecs.length} sizes)
-              </h2>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-lg">Size</TableHead>
-                      <TableHead className="text-lg text-right">Current</TableHead>
-                      <TableHead className="text-lg text-right">Need</TableHead>
-                      <TableHead className="text-lg">Priority</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {stockRecs.map((rec) => (
-                      <TableRow key={rec.id} className="text-lg">
-                        <TableCell className="font-bold">{rec.size_display}</TableCell>
-                        <TableCell className="text-right">{rec.current_stock}</TableCell>
-                        <TableCell className="text-right font-bold text-green-600 print:text-black">
-                          +{rec.need_units}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={rec.priority === 'high' ? 'destructive' : rec.priority === 'medium' ? 'default' : 'secondary'}>
-                            {rec.priority.toUpperCase()}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="flex items-center gap-3 mb-5">
+                <h2 className="text-2xl font-bold text-green-600 print:text-black">
+                  NEED TO STOCK
+                </h2>
+                <Badge variant="secondary" className="text-base px-3 py-1">
+                  {stockRecs.length} sizes
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {stockRecs.map((rec) => (
+                  <Card key={rec.id} className="border-l-4 border-l-green-500 p-4 flex flex-col gap-2">
+                    <div className="font-mono text-2xl font-bold tracking-tight">
+                      {rec.size_display}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl font-bold text-green-600 print:text-black">
+                        +{rec.need_units}
+                      </span>
+                      <Badge variant={rec.priority === 'high' ? 'destructive' : rec.priority === 'medium' ? 'default' : 'secondary'}>
+                        {rec.priority.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {rec.current_stock} in stock
+                    </div>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
@@ -188,36 +177,33 @@ export default function SimpleStockPage() {
           {/* Need to Purge */}
           {purgeRecs.length > 0 && (
             <div>
-              <h2 className="text-xl font-bold mb-4 text-red-700 print:text-black">
-                CONSIDER PURGING ({purgeRecs.length} sizes)
-              </h2>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-lg">Size</TableHead>
-                      <TableHead className="text-lg text-right">Current</TableHead>
-                      <TableHead className="text-lg text-right">Excess</TableHead>
-                      <TableHead className="text-lg">Reason</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {purgeRecs.map((rec) => (
-                      <TableRow key={rec.id} className="text-lg">
-                        <TableCell className="font-bold">{rec.size_display}</TableCell>
-                        <TableCell className="text-right">{rec.current_stock}</TableCell>
-                        <TableCell className="text-right font-bold text-red-600 print:text-black">
-                          {rec.need_units}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={rec.flag === 'stale' ? 'destructive' : 'secondary'}>
-                            {rec.flag === 'stale' ? 'STALE' : 'OVERSTOCK'}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="flex items-center gap-3 mb-5">
+                <h2 className="text-2xl font-bold text-red-600 print:text-black">
+                  CONSIDER PURGING
+                </h2>
+                <Badge variant="secondary" className="text-base px-3 py-1">
+                  {purgeRecs.length} sizes
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {purgeRecs.map((rec) => (
+                  <Card key={rec.id} className="border-l-4 border-l-red-500 p-4 flex flex-col gap-2">
+                    <div className="font-mono text-2xl font-bold tracking-tight">
+                      {rec.size_display}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl font-bold text-red-600 print:text-black">
+                        {rec.need_units}
+                      </span>
+                      <Badge variant={rec.flag === 'stale' ? 'destructive' : 'secondary'}>
+                        {rec.flag === 'stale' ? 'STALE' : 'OVERSTOCK'}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {rec.current_stock} in stock
+                    </div>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
@@ -225,34 +211,33 @@ export default function SimpleStockPage() {
           {/* Watchlist */}
           {watchlistRecs.length > 0 && (
             <div>
-              <h2 className="text-xl font-bold mb-4 text-amber-600 print:text-black">
-                WATCHLIST ({watchlistRecs.length} sizes)
-              </h2>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-lg">Size</TableHead>
-                      <TableHead className="text-lg text-right">Current</TableHead>
-                      <TableHead className="text-lg text-right">Age (days)</TableHead>
-                      <TableHead className="text-lg">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {watchlistRecs.map((rec) => (
-                      <TableRow key={rec.id} className="text-lg">
-                        <TableCell className="font-bold">{rec.size_display}</TableCell>
-                        <TableCell className="text-right">{rec.current_stock}</TableCell>
-                        <TableCell className="text-right">{rec.oldest_age_days ?? '—'}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-300">
-                            WATCHING
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="flex items-center gap-3 mb-5">
+                <h2 className="text-2xl font-bold text-amber-600 print:text-black">
+                  WATCHLIST
+                </h2>
+                <Badge variant="secondary" className="text-base px-3 py-1">
+                  {watchlistRecs.length} sizes
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {watchlistRecs.map((rec) => (
+                  <Card key={rec.id} className="border-l-4 border-l-amber-400 p-4 flex flex-col gap-2">
+                    <div className="font-mono text-2xl font-bold tracking-tight">
+                      {rec.size_display}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        {rec.oldest_age_days != null ? `${rec.oldest_age_days}d old` : 'New'}
+                      </span>
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-300">
+                        WATCHING
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {rec.current_stock} in stock
+                    </div>
+                  </Card>
+                ))}
               </div>
             </div>
           )}
@@ -265,10 +250,10 @@ export default function SimpleStockPage() {
           body * {
             visibility: hidden;
           }
-          .space-y-6, .space-y-6 * {
+          .space-y-8, .space-y-8 * {
             visibility: visible;
           }
-          .space-y-6 {
+          .space-y-8 {
             position: absolute;
             left: 0;
             top: 0;
